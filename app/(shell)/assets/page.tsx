@@ -16,6 +16,7 @@ import { AssetMapClient } from "@/components/maps/asset-map-client";
 import type { FlyToTarget } from "@/components/maps/asset-map";
 import { AssetFilters, type AssetFilterState } from "@/components/assets/asset-filters";
 import { AssetDetailPanel } from "@/components/assets/asset-detail-panel";
+import { Pagination } from "@/components/shared/pagination";
 import { useAppStore } from "@/lib/store";
 import { ASSET_TYPE_LABELS, cn, formatDate } from "@/lib/utils";
 import { Droplet, Waves, GitBranch, ShowerHead } from "lucide-react";
@@ -28,6 +29,8 @@ const TYPE_ICON: Record<AssetType, typeof Droplet> = {
   sanitation_block: ShowerHead,
 };
 
+const PAGE_SIZE = 10;
+
 export default function AssetsPage() {
   const assets = useAppStore((s) => s.assets);
   const officers = useAppStore((s) => s.officers);
@@ -35,6 +38,7 @@ export default function AssetsPage() {
   const searchParams = useSearchParams();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const assetParam = searchParams.get("asset");
@@ -63,6 +67,13 @@ export default function AssetsPage() {
       return true;
     });
   }, [assets, filters]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredAssets.length / PAGE_SIZE));
+  const pagedAssets = filteredAssets.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const selectedAsset = assets.find((a) => a.id === selectedId) ?? null;
   const selectedOfficer = officers.find((o) => o.id === selectedAsset?.assignedOfficerId);
@@ -98,7 +109,7 @@ export default function AssetsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAssets.map((asset) => {
+                {pagedAssets.map((asset) => {
                   const Icon = TYPE_ICON[asset.type];
                   return (
                     <TableRow
@@ -142,6 +153,13 @@ export default function AssetsPage() {
                 )}
               </TableBody>
             </Table>
+            <Pagination
+              page={page}
+              pageCount={pageCount}
+              total={filteredAssets.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+            />
           </CardContent>
         </Card>
 
