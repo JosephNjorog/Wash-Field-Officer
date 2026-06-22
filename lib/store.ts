@@ -59,6 +59,17 @@ interface AppState {
     resolutionNote?: string
   ) => Promise<void>;
   assignComplaint: (complaintId: string, officerId: string) => Promise<void>;
+  updateOfficer: (
+    officerId: string,
+    patch: {
+      name?: string;
+      region?: string;
+      phone?: string;
+      email?: string;
+      status?: Officer["status"];
+      dailyTarget?: number;
+    }
+  ) => Promise<void>;
   flushPendingSync: () => void;
 }
 
@@ -236,6 +247,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set((state) => ({
       complaints: state.complaints.map((c) => (c.id === complaintId ? updated : c)),
+    }));
+  },
+
+  updateOfficer: async (officerId, patch) => {
+    const updated = await api.updateOfficer(officerId, patch);
+    set((state) => ({
+      officers: state.officers.map((o) => (o.id === officerId ? updated : o)),
     }));
   },
 

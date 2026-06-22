@@ -79,4 +79,40 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(patch),
     }).then((r) => r.officer),
+
+  createOfficer: (input: {
+    name: string;
+    region: string;
+    phone: string;
+    email: string;
+    dailyTarget: number;
+  }) =>
+    request<{ officer: Officer }>("/api/officers", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }).then((r) => r.officer),
+
+  updateAsset: (
+    assetId: string,
+    patch: { assignedOfficerId?: string; status?: Asset["status"]; conditionScore?: number }
+  ) =>
+    request<{ asset: Asset }>(`/api/assets/${assetId}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }).then((r) => r.asset),
+
+  createComplaint: (input: {
+    category: Complaint["category"];
+    description: string;
+    address: string;
+    region: string;
+    lat: number;
+    lng: number;
+    assignedOfficerId?: string | null;
+    assetId?: string;
+  }) =>
+    request<{ complaint: Complaint }>("/api/complaints", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }).then((r) => r.complaint),
 };
