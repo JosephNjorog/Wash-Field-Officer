@@ -6,6 +6,8 @@ import { assets, complaints } from "@/lib/db/schema";
 import { serializeComplaint } from "@/lib/db/serializers";
 import type { ComplaintStatus } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 const createComplaintSchema = z.object({
   category: z.enum(["No Water", "Low Pressure", "Dirty Water", "Broken Kiosk", "Sanitation Issue"]),
   description: z.string().min(1),

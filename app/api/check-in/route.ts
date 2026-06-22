@@ -4,6 +4,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { assets, checkIns, officers } from "@/lib/db/schema";
 
+export const dynamic = "force-dynamic";
+
 const checkInSchema = z.object({
   officerId: z.string().min(1),
   assetId: z.string().min(1),

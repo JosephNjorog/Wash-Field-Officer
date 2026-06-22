@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { officers } from "@/lib/db/schema";
 import { serializeOfficer } from "@/lib/db/serializers";
 
+export const dynamic = "force-dynamic";
+
 const createOfficerSchema = z.object({
   name: z.string().min(2),
   region: z.string().min(2),

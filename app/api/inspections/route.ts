@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { assets, inspections, officers } from "@/lib/db/schema";
 import { serializeInspection } from "@/lib/db/serializers";
 
+export const dynamic = "force-dynamic";
+
 const createInspectionSchema = z.object({
   officerId: z.string().min(1),
   assetId: z.string().min(1),
