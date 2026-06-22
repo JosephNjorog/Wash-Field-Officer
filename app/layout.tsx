@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthHydrator } from "@/components/shared/auth-hydrator";
+import { DataLoader } from "@/components/shared/data-loader";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -91,6 +92,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <TooltipProvider delayDuration={200}>
           <AuthHydrator />
+          <DataLoader />
           {children}
           <Toaster richColors position="top-right" />
         </TooltipProvider>

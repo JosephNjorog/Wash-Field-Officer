@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Users, ClipboardList, ClipboardCheck, AlertTriangle } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { MapSection } from "@/components/dashboard/map-section";
@@ -17,6 +17,12 @@ export default function DashboardPage() {
   const complaints = useAppStore((s) => s.complaints);
   const dailySummaries = useAppStore((s) => s.dailySummaries);
   const liveActivity = useAppStore((s) => s.activity);
+  const loadAll = useAppStore((s) => s.loadAll);
+
+  useEffect(() => {
+    const id = setInterval(() => loadAll(), 25000);
+    return () => clearInterval(id);
+  }, [loadAll]);
 
   const activeOfficers = officers.filter((o) => o.status === "Active").length;
   const yesterdayActive = dailySummaries.filter(

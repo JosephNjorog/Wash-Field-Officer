@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import seed from "@/data/seed.json";
+import { api } from "@/lib/api";
 import type {
   ActivityEvent,
   Asset,
@@ -13,10 +13,7 @@ import type {
   InspectionFormData,
   Officer,
   PendingSyncItem,
-  SeedData,
 } from "@/lib/types";
-
-const data = seed as SeedData;
 
 function buildInitialFieldTasks(officerId: string, assets: Asset[]): Record<string, FieldSiteTask> {
   const todays = assets.filter((a) => a.assignedOfficerId === officerId).slice(0, 5);
@@ -38,10 +35,14 @@ interface AppState {
   offlineMode: boolean;
   fieldTasks: Record<string, FieldSiteTask>;
   currentFieldOfficerId: string | null;
+  loading: boolean;
+  loaded: boolean;
+  loadError: string | null;
 
+  loadAll: () => Promise<void>;
   setCurrentFieldOfficer: (officerId: string) => void;
   toggleOfflineMode: () => void;
-  checkInSite: (assetId: string) => void;
+  checkInSite: (assetId: string) => Promise<void>;
   submitInspection: (input: {
     assetId: string;
     water_flow_status: InspectionFormData["water_flow_status"];
@@ -51,13 +52,13 @@ interface AppState {
     photo_count: number;
     gps_lat: number;
     gps_lng: number;
-  }) => void;
+  }) => Promise<void>;
   updateComplaintStatus: (
     complaintId: string,
     status: ComplaintStatus,
     resolutionNote?: string
-  ) => void;
-  assignComplaint: (complaintId: string, officerId: string) => void;
+  ) => Promise<void>;
+  assignComplaint: (complaintId: string, officerId: string) => Promise<void>;
   flushPendingSync: () => void;
 }
 
@@ -70,16 +71,48 @@ function pushActivity(event: Omit<ActivityEvent, "id" | "time">): ActivityEvent 
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
-  officers: data.officers,
-  assets: data.assets,
-  inspections: data.inspections,
-  complaints: data.complaints,
-  dailySummaries: data.daily_summaries,
+  officers: [],
+  assets: [],
+  inspections: [],
+  complaints: [],
+  dailySummaries: [],
   activity: [],
   pendingSync: [],
   offlineMode: false,
   fieldTasks: {},
   currentFieldOfficerId: null,
+  loading: false,
+  loaded: false,
+  loadError: null,
+
+  loadAll: async () => {
+    if (get().loading) return;
+    set({ loading: true, loadError: null });
+    try {
+      const [officers, assets, inspections, complaints, dailySummaries] = await Promise.all([
+        api.getOfficers(),
+        api.getAssets(),
+        api.getInspections(),
+        api.getComplaints(),
+        api.getDailySummaries(),
+      ]);
+      set((state) => ({
+        officers,
+        assets,
+        inspections,
+        complaints,
+        dailySummaries,
+        loading: false,
+        loaded: true,
+        fieldTasks:
+          state.currentFieldOfficerId && Object.keys(state.fieldTasks).length === 0
+            ? buildInitialFieldTasks(state.currentFieldOfficerId, assets)
+            : state.fieldTasks,
+      }));
+    } catch (err) {
+      set({ loading: false, loadError: err instanceof Error ? err.message : "Failed to load data" });
+    }
+  },
 
   setCurrentFieldOfficer: (officerId) =>
     set((state) => ({
@@ -100,15 +133,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       return { offlineMode: true };
     }),
 
-  checkInSite: (assetId) => {
+  checkInSite: async (assetId) => {
     const officer = get().officers.find((o) => o.id === get().currentFieldOfficerId);
     const asset = get().assets.find((a) => a.id === assetId);
     if (!officer || !asset) return;
-    const now = new Date().toISOString();
+
+    const result = await api.checkIn(officer.id, assetId);
+
     set((state) => ({
       fieldTasks: {
         ...state.fieldTasks,
-        [assetId]: { assetId, status: "Checked In", checkInAt: now },
+        [assetId]: { assetId, status: "Checked In", checkInAt: result.checkedInAt },
       },
       activity: [
         pushActivity({
@@ -118,47 +153,30 @@ export const useAppStore = create<AppState>((set, get) => ({
         }),
         ...state.activity,
       ],
-      pendingSync: state.offlineMode
-        ? [
-            {
-              id: `SYNC-${Date.now()}`,
-              type: "check-in",
-              label: `Check-in: ${asset.name}`,
-              createdAt: now,
-              status: "pending",
-            },
-            ...state.pendingSync,
-          ]
-        : state.pendingSync,
+      pendingSync: [
+        {
+          id: `SYNC-${Date.now()}`,
+          type: "check-in",
+          label: `Check-in: ${asset.name}`,
+          createdAt: result.checkedInAt,
+          status: state.offlineMode ? "pending" : "synced",
+        },
+        ...state.pendingSync,
+      ],
     }));
   },
 
-  submitInspection: (input) => {
+  submitInspection: async (input) => {
     const officer = get().officers.find((o) => o.id === get().currentFieldOfficerId);
     const asset = get().assets.find((a) => a.id === input.assetId);
     if (!officer || !asset) return;
-    const now = new Date().toISOString();
-    const newInspection: Inspection = {
-      id: `INS-${Math.floor(Math.random() * 100000)}`,
-      officerId: officer.id,
-      assetId: input.assetId,
-      formData: {
-        water_flow_status: input.water_flow_status,
-        infrastructure_condition: input.infrastructure_condition,
-        chlorine_level: input.chlorine_level,
-        notes: input.notes,
-        photo_count: input.photo_count,
-        gps_lat: input.gps_lat,
-        gps_lng: input.gps_lng,
-        submitted_at: now,
-        synced_at: get().offlineMode ? null : now,
-      },
-    };
+
+    const inspection = await api.submitInspection({ officerId: officer.id, ...input });
 
     set((state) => ({
-      inspections: [newInspection, ...state.inspections],
+      inspections: [inspection, ...state.inspections],
       assets: state.assets.map((a) =>
-        a.id === input.assetId ? { ...a, lastInspected: now } : a
+        a.id === input.assetId ? { ...a, lastInspected: inspection.formData.submitted_at } : a
       ),
       fieldTasks: state.fieldTasks[input.assetId]
         ? {
@@ -179,7 +197,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           id: `SYNC-${Date.now()}`,
           type: "inspection",
           label: `Inspection: ${asset.name}`,
-          createdAt: now,
+          createdAt: inspection.formData.submitted_at,
           status: state.offlineMode ? "offline" : "synced",
         },
         ...state.pendingSync,
@@ -187,26 +205,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  updateComplaintStatus: (complaintId, status, resolutionNote) => {
+  updateComplaintStatus: async (complaintId, status, resolutionNote) => {
     const officer = get().officers.find((o) => o.id === get().currentFieldOfficerId);
-    const complaint = get().complaints.find((c) => c.id === complaintId);
-    if (!complaint) return;
-    const now = new Date().toISOString();
+    const existing = get().complaints.find((c) => c.id === complaintId);
+    if (!existing) return;
+
+    const updated = await api.updateComplaint(complaintId, { status, resolutionNote });
+
     set((state) => ({
-      complaints: state.complaints.map((c) =>
-        c.id === complaintId
-          ? {
-              ...c,
-              status,
-              resolvedAt: status === "resolved" ? now : c.resolvedAt,
-              resolutionNote: resolutionNote ?? c.resolutionNote,
-            }
-          : c
-      ),
+      complaints: state.complaints.map((c) => (c.id === complaintId ? updated : c)),
       activity: [
         pushActivity({
           type: "complaint",
-          text: `Updated complaint ${complaint.id} to "${status}"`,
+          text: `Updated complaint ${complaintId} to "${status}"`,
           officerName: officer?.name ?? "System",
         }),
         ...state.activity,
@@ -214,14 +225,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  assignComplaint: (complaintId, officerId) =>
+  assignComplaint: async (complaintId, officerId) => {
+    const existing = get().complaints.find((c) => c.id === complaintId);
+    if (!existing) return;
+
+    const updated = await api.updateComplaint(complaintId, {
+      assignedOfficerId: officerId,
+      status: existing.status === "open" ? "assigned" : undefined,
+    });
+
     set((state) => ({
-      complaints: state.complaints.map((c) =>
-        c.id === complaintId
-          ? { ...c, assignedOfficerId: officerId, status: c.status === "open" ? "assigned" : c.status }
-          : c
-      ),
-    })),
+      complaints: state.complaints.map((c) => (c.id === complaintId ? updated : c)),
+    }));
+  },
 
   flushPendingSync: () =>
     set((state) => ({
