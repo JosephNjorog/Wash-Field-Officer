@@ -100,7 +100,7 @@ export function Header() {
             <DropdownMenuItem
               onClick={() => {
                 logout();
-                router.push("/");
+                router.push("/login");
               }}
             >
               Sign out

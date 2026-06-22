@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
   const isFieldPath = pathname.startsWith("/field");
 
   if (!role && (isManagementPath || isFieldPath)) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   if (role === "officer" && isManagementPath) {
@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  if (pathname === "/" && role) {
+  if (pathname === "/login" && role) {
     return NextResponse.redirect(
       new URL(role === "officer" ? "/field" : "/dashboard", request.url)
     );
@@ -30,5 +30,13 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/assets/:path*", "/complaints/:path*", "/reports/:path*", "/settings/:path*", "/field/:path*"],
+  matcher: [
+    "/login",
+    "/dashboard/:path*",
+    "/assets/:path*",
+    "/complaints/:path*",
+    "/reports/:path*",
+    "/settings/:path*",
+    "/field/:path*",
+  ],
 };

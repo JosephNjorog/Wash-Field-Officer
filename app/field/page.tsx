@@ -34,7 +34,7 @@ export default function FieldPage() {
   useEffect(() => {
     if (!hydrated) return;
     if (!session) {
-      router.replace("/");
+      router.replace("/login");
       return;
     }
     if (session.role !== "officer") {
@@ -72,7 +72,7 @@ export default function FieldPage() {
       <button
         onClick={() => {
           logout();
-          router.push("/");
+          router.push("/login");
         }}
         className="fixed left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-destructive shadow-md hover:bg-destructive/10"
       >
