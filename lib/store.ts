@@ -70,6 +70,27 @@ interface AppState {
       dailyTarget?: number;
     }
   ) => Promise<void>;
+  createOfficer: (input: {
+    name: string;
+    region: string;
+    phone: string;
+    email: string;
+    dailyTarget: number;
+  }) => Promise<void>;
+  updateAsset: (
+    assetId: string,
+    patch: { assignedOfficerId?: string; status?: Asset["status"]; conditionScore?: number }
+  ) => Promise<void>;
+  createComplaint: (input: {
+    category: Complaint["category"];
+    description: string;
+    address: string;
+    region: string;
+    lat: number;
+    lng: number;
+    assignedOfficerId?: string | null;
+    assetId?: string;
+  }) => Promise<void>;
   flushPendingSync: () => void;
 }
 
