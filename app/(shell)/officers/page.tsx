@@ -17,8 +17,11 @@ import { OfficerStatusBadge } from "@/components/shared/status-badge";
 import { OfficerEditDialog } from "@/components/settings/officer-edit-dialog";
 import { OfficerAddDialog } from "@/components/settings/officer-add-dialog";
 import { OfficerDetailSheet } from "@/components/settings/officer-detail-sheet";
+import { Pagination } from "@/components/shared/pagination";
 import { useAppStore } from "@/lib/store";
 import type { Officer } from "@/lib/types";
+
+const PAGE_SIZE = 10;
 
 export default function OfficersPage() {
   const officers = useAppStore((s) => s.officers);
@@ -27,6 +30,10 @@ export default function OfficersPage() {
   const [detailOfficer, setDetailOfficer] = useState<Officer | null>(null);
   const [editOfficer, setEditOfficer] = useState<Officer | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [page, setPage] = useState(1);
+
+  const pageCount = Math.max(1, Math.ceil(officers.length / PAGE_SIZE));
+  const pagedOfficers = officers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   useEffect(() => {
     const officerParam = searchParams.get("officer");
@@ -89,7 +96,7 @@ export default function OfficersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {officers.map((officer) => (
+              {pagedOfficers.map((officer) => (
                 <TableRow
                   key={officer.id}
                   className="cursor-pointer"
@@ -118,6 +125,13 @@ export default function OfficersPage() {
               ))}
             </TableBody>
           </Table>
+          <Pagination
+            page={page}
+            pageCount={pageCount}
+            total={officers.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
 
