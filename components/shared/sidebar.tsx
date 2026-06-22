@@ -14,8 +14,8 @@ import {
   ChevronsRight,
   Wifi,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { CURRENT_SUPERVISOR } from "@/lib/store";
+import { cn, initials } from "@/lib/utils";
+import { useAuthStore } from "@/lib/auth-store";
 import { useState } from "react";
 import {
   Tooltip,
@@ -34,6 +34,9 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const session = useAuthStore((s) => s.session);
+  const name = session?.name || "Supervisor";
+  const userInitials = name ? initials(name) : "U";
 
   return (
     <aside
@@ -112,16 +115,12 @@ export function Sidebar() {
           )}
         >
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-semibold">
-            {CURRENT_SUPERVISOR.initials}
+            {userInitials}
           </div>
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold leading-tight">
-                {CURRENT_SUPERVISOR.name}
-              </p>
-              <p className="truncate text-xs text-white/60">
-                {CURRENT_SUPERVISOR.role}
-              </p>
+              <p className="truncate text-sm font-semibold leading-tight">{name}</p>
+              <p className="truncate text-xs text-white/60">Supervisor</p>
             </div>
           )}
         </div>

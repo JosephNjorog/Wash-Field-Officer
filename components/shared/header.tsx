@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Bell, Search, ChevronDown, WifiOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -13,7 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CURRENT_SUPERVISOR, useAppStore } from "@/lib/store";
+import { useAppStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/auth-store";
+import { initials } from "@/lib/utils";
 
 const TITLES: Record<string, string> = {
   "/dashboard": "Management Dashboard",
@@ -25,9 +27,14 @@ const TITLES: Record<string, string> = {
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const offlineMode = useAppStore((s) => s.offlineMode);
   const toggleOfflineMode = useAppStore((s) => s.toggleOfflineMode);
+  const session = useAuthStore((s) => s.session);
+  const logout = useAuthStore((s) => s.logout);
   const [now, setNow] = useState<Date | null>(null);
+  const name = session?.name || "Supervisor";
+  const userInitials = name ? initials(name) : "U";
 
   useEffect(() => {
     setNow(new Date());
@@ -76,11 +83,11 @@ export function Header() {
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted">
             <div className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-              {CURRENT_SUPERVISOR.initials}
+              {userInitials}
             </div>
             <div className="hidden text-left sm:block">
-              <p className="text-sm font-medium leading-tight">{CURRENT_SUPERVISOR.name}</p>
-              <p className="text-xs text-muted-foreground">{CURRENT_SUPERVISOR.role}</p>
+              <p className="text-sm font-medium leading-tight">{name}</p>
+              <p className="text-xs text-muted-foreground">Supervisor</p>
             </div>
             <ChevronDown className="size-4 text-muted-foreground" />
           </DropdownMenuTrigger>
@@ -90,7 +97,14 @@ export function Header() {
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Account Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Sign out</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                logout();
+                router.push("/");
+              }}
+            >
+              Sign out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

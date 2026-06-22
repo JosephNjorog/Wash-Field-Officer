@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthHydrator } from "@/components/shared/auth-hydrator";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
     <html lang="en" className={cn(inter.variable)}>
       <body className="font-sans antialiased">
         <TooltipProvider delayDuration={200}>
+          <AuthHydrator />
           {children}
           <Toaster richColors position="top-right" />
         </TooltipProvider>

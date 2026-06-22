@@ -16,10 +16,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { OfficerStatusBadge } from "@/components/shared/status-badge";
-import { useAppStore, CURRENT_SUPERVISOR } from "@/lib/store";
+import { useAppStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/auth-store";
+import { initials } from "@/lib/utils";
 
 export default function SettingsPage() {
   const officers = useAppStore((s) => s.officers);
+  const session = useAuthStore((s) => s.session);
+  const name = session?.name || "Supervisor";
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [smsAlerts, setSmsAlerts] = useState(true);
   const [autoSync, setAutoSync] = useState(true);
@@ -33,16 +37,16 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="flex flex-wrap items-end gap-4">
           <div className="flex size-16 items-center justify-center rounded-full bg-primary text-xl font-semibold text-primary-foreground">
-            {CURRENT_SUPERVISOR.initials}
+            {initials(name)}
           </div>
           <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Full Name</Label>
-              <Input defaultValue={CURRENT_SUPERVISOR.name} />
+              <Input defaultValue={name} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Role</Label>
-              <Input defaultValue={CURRENT_SUPERVISOR.role} disabled />
+              <Input defaultValue="Supervisor" disabled />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Email</Label>

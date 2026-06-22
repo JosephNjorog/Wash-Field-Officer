@@ -18,14 +18,6 @@ import type {
 
 const data = seed as SeedData;
 
-export const CURRENT_SUPERVISOR = {
-  name: "James Kariuki",
-  role: "Supervisor",
-  initials: "JK",
-};
-
-export const CURRENT_FIELD_OFFICER_ID = "OFF-001";
-
 function buildInitialFieldTasks(officerId: string, assets: Asset[]): Record<string, FieldSiteTask> {
   const todays = assets.filter((a) => a.assignedOfficerId === officerId).slice(0, 5);
   const tasks: Record<string, FieldSiteTask> = {};
@@ -45,7 +37,9 @@ interface AppState {
   pendingSync: PendingSyncItem[];
   offlineMode: boolean;
   fieldTasks: Record<string, FieldSiteTask>;
+  currentFieldOfficerId: string | null;
 
+  setCurrentFieldOfficer: (officerId: string) => void;
   toggleOfflineMode: () => void;
   checkInSite: (assetId: string) => void;
   submitInspection: (input: {
@@ -84,7 +78,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   activity: [],
   pendingSync: [],
   offlineMode: false,
-  fieldTasks: buildInitialFieldTasks(CURRENT_FIELD_OFFICER_ID, data.assets),
+  fieldTasks: {},
+  currentFieldOfficerId: null,
+
+  setCurrentFieldOfficer: (officerId) =>
+    set((state) => ({
+      currentFieldOfficerId: officerId,
+      fieldTasks:
+        state.currentFieldOfficerId === officerId
+          ? state.fieldTasks
+          : buildInitialFieldTasks(officerId, state.assets),
+    })),
 
   toggleOfflineMode: () =>
     set((state) => {
@@ -97,7 +101,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }),
 
   checkInSite: (assetId) => {
-    const officer = get().officers.find((o) => o.id === CURRENT_FIELD_OFFICER_ID);
+    const officer = get().officers.find((o) => o.id === get().currentFieldOfficerId);
     const asset = get().assets.find((a) => a.id === assetId);
     if (!officer || !asset) return;
     const now = new Date().toISOString();
@@ -130,7 +134,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   submitInspection: (input) => {
-    const officer = get().officers.find((o) => o.id === CURRENT_FIELD_OFFICER_ID);
+    const officer = get().officers.find((o) => o.id === get().currentFieldOfficerId);
     const asset = get().assets.find((a) => a.id === input.assetId);
     if (!officer || !asset) return;
     const now = new Date().toISOString();
@@ -184,7 +188,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   updateComplaintStatus: (complaintId, status, resolutionNote) => {
-    const officer = get().officers.find((o) => o.id === CURRENT_FIELD_OFFICER_ID);
+    const officer = get().officers.find((o) => o.id === get().currentFieldOfficerId);
     const complaint = get().complaints.find((c) => c.id === complaintId);
     if (!complaint) return;
     const now = new Date().toISOString();
