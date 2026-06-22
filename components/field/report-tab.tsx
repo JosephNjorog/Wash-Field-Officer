@@ -37,7 +37,13 @@ interface Photo {
   file: File;
 }
 
-export function ReportTab() {
+export function ReportTab({
+  presetAssetId,
+  onPresetConsumed,
+}: {
+  presetAssetId?: string | null;
+  onPresetConsumed?: () => void;
+} = {}) {
   const assets = useAppStore((s) => s.assets);
   const submitInspection = useAppStore((s) => s.submitInspection);
   const pendingSync = useAppStore((s) => s.pendingSync);
@@ -56,6 +62,7 @@ export function ReportTab() {
     control,
     watch,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -67,6 +74,13 @@ export function ReportTab() {
       assetId: "",
     },
   });
+
+  useEffect(() => {
+    if (presetAssetId) {
+      setValue("assetId", presetAssetId);
+      onPresetConsumed?.();
+    }
+  }, [presetAssetId, setValue, onPresetConsumed]);
 
   const selectedAssetId = watch("assetId");
   const selectedAsset = assets.find((a) => a.id === selectedAssetId);
