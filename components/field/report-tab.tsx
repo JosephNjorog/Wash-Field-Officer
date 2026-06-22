@@ -257,6 +257,7 @@ export function ReportTab() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
+                  aria-label="Add photo"
                   className="flex size-14 items-center justify-center rounded-md border border-dashed border-border text-muted-foreground hover:bg-muted"
                 >
                   <Camera className="size-5" />
