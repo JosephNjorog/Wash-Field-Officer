@@ -130,16 +130,19 @@ export function ReportFilters({
           <Button
             variant="outline"
             className="flex-1 gap-1.5"
-            onClick={() => toast.success("Export queued", { description: "PDF report will be ready shortly." })}
+            disabled={exporting === "pdf"}
+            onClick={() => onExport("pdf")}
           >
-            <FileDown className="size-4" /> Export PDF
+            <FileDown className="size-4" /> {exporting === "pdf" ? "Exporting..." : "Export PDF"}
           </Button>
           <Button
             variant="outline"
             className="flex-1 gap-1.5"
-            onClick={() => toast.success("Export queued", { description: "CSV export will be ready shortly." })}
+            disabled={exporting === "csv"}
+            onClick={() => onExport("csv")}
           >
-            <FileSpreadsheet className="size-4" /> Export CSV
+            <FileSpreadsheet className="size-4" />{" "}
+            {exporting === "csv" ? "Exporting..." : "Export CSV"}
           </Button>
         </div>
       </CardContent>
