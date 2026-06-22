@@ -8,6 +8,7 @@ import { MapSection } from "@/components/dashboard/map-section";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { ActivityDetailDialog } from "@/components/dashboard/activity-detail-dialog";
 import { OfficerPerformanceTable } from "@/components/dashboard/officer-performance-table";
+import { RecentReports } from "@/components/reports/recent-reports";
 import { useAppStore } from "@/lib/store";
 import { buildSeedActivity, TODAY_STR } from "@/lib/selectors";
 import { hoursSince } from "@/lib/utils";
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const complaints = useAppStore((s) => s.complaints);
   const dailySummaries = useAppStore((s) => s.dailySummaries);
   const liveActivity = useAppStore((s) => s.activity);
+  const reports = useAppStore((s) => s.reports);
   const loadAll = useAppStore((s) => s.loadAll);
   const [selectedEvent, setSelectedEvent] = useState<ActivityEvent | null>(null);
 
@@ -102,6 +104,8 @@ export default function DashboardPage() {
           <OfficerPerformanceTable officers={officers} dailySummaries={dailySummaries} />
         </div>
       </div>
+
+      <RecentReports reports={reports} />
 
       <ActivityDetailDialog event={selectedEvent} onClose={() => setSelectedEvent(null)} />
     </div>
