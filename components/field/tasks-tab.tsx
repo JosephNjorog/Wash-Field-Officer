@@ -47,6 +47,8 @@ export function TasksTab() {
         <div className="flex items-center gap-1 rounded-md bg-muted p-1">
           <button
             onClick={() => setView("list")}
+            aria-label="List view"
+            aria-pressed={view === "list"}
             className={cn(
               "flex size-7 items-center justify-center rounded-sm",
               view === "list" ? "bg-white shadow-sm text-secondary" : "text-muted-foreground"
@@ -56,6 +58,8 @@ export function TasksTab() {
           </button>
           <button
             onClick={() => setView("map")}
+            aria-label="Map view"
+            aria-pressed={view === "map"}
             className={cn(
               "flex size-7 items-center justify-center rounded-sm",
               view === "map" ? "bg-white shadow-sm text-secondary" : "text-muted-foreground"

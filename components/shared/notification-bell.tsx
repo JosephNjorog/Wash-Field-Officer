@@ -60,7 +60,10 @@ export function NotificationBell() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted">
+        <button
+          aria-label={`Notifications${notifications.length > 0 ? ` (${notifications.length} unread)` : ""}`}
+          className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
+        >
           <Bell className="size-5" />
           {notifications.length > 0 && (
             <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
