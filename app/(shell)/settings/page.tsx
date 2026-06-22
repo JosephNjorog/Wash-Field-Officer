@@ -1,22 +1,79 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { useAuthStore } from "@/lib/auth-store";
+import { useAppStore } from "@/lib/store";
 import { initials } from "@/lib/utils";
 
 export default function SettingsPage() {
-  const session = useAuthStore((s) => s.session);
-  const name = session?.name || "Supervisor";
-  const [emailNotifs, setEmailNotifs] = useState(true);
-  const [smsAlerts, setSmsAlerts] = useState(true);
-  const [autoSync, setAutoSync] = useState(true);
-  const [dailyTarget, setDailyTarget] = useState(6);
+  const supervisorProfile = useAppStore((s) => s.supervisorProfile);
+  const systemPreferences = useAppStore((s) => s.systemPreferences);
+  const loadSettings = useAppStore((s) => s.loadSettings);
+  const updateSupervisorProfile = useAppStore((s) => s.updateSupervisorProfile);
+  const updateSystemPreferences = useAppStore((s) => s.updateSystemPreferences);
+
+  const [name, setName] = useState(supervisorProfile.name);
+  const [email, setEmail] = useState(supervisorProfile.email);
+  const [emailNotifs, setEmailNotifs] = useState(systemPreferences.emailNotifications);
+  const [smsAlerts, setSmsAlerts] = useState(systemPreferences.smsAlerts);
+  const [autoSync, setAutoSync] = useState(systemPreferences.autoSync);
+  const [dailyTarget, setDailyTarget] = useState(systemPreferences.defaultDailyTarget);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+
+  useEffect(() => {
+    setName(supervisorProfile.name);
+    setEmail(supervisorProfile.email);
+  }, [supervisorProfile]);
+
+  useEffect(() => {
+    setEmailNotifs(systemPreferences.emailNotifications);
+    setSmsAlerts(systemPreferences.smsAlerts);
+    setAutoSync(systemPreferences.autoSync);
+    setDailyTarget(systemPreferences.defaultDailyTarget);
+  }, [systemPreferences]);
+
+  async function handleSaveProfile() {
+    setSavingProfile(true);
+    try {
+      await updateSupervisorProfile({ name, email });
+      toast.success("Profile updated");
+    } catch (err) {
+      toast.error("Failed to update profile", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setSavingProfile(false);
+    }
+  }
+
+  async function handleSavePreferences() {
+    setSavingPrefs(true);
+    try {
+      await updateSystemPreferences({
+        emailNotifications: emailNotifs,
+        smsAlerts,
+        autoSync,
+        defaultDailyTarget: dailyTarget,
+      });
+      toast.success("Preferences saved");
+    } catch (err) {
+      toast.error("Failed to save preferences", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setSavingPrefs(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -31,7 +88,7 @@ export default function SettingsPage() {
           <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Full Name</Label>
-              <Input defaultValue={name} />
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Role</Label>
@@ -39,10 +96,12 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Email</Label>
-              <Input defaultValue="james.kariuki@fieldwatch.go.ke" />
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
           </div>
-          <Button onClick={() => toast.success("Profile updated")}>Save Profile</Button>
+          <Button onClick={handleSaveProfile} disabled={savingProfile}>
+            {savingProfile ? "Saving..." : "Save Profile"}
+          </Button>
         </CardContent>
       </Card>
 
@@ -92,7 +151,9 @@ export default function SettingsPage() {
               onChange={(e) => setDailyTarget(Number(e.target.value))}
             />
           </div>
-          <Button onClick={() => toast.success("Preferences saved")}>Save Preferences</Button>
+          <Button onClick={handleSavePreferences} disabled={savingPrefs}>
+            {savingPrefs ? "Saving..." : "Save Preferences"}
+          </Button>
         </CardContent>
       </Card>
     </div>
