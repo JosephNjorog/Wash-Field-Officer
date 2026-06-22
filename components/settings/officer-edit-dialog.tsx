@@ -31,7 +31,7 @@ const schema = z.object({
   phone: z.string().min(6, "Phone is required"),
   email: z.string().email("Enter a valid email"),
   status: z.enum(["Active", "Offline", "Overdue"]),
-  dailyTarget: z.coerce.number().int().min(1).max(20),
+  dailyTarget: z.number().int().min(1).max(20),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -112,7 +112,10 @@ export function OfficerEditDialog({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Daily Site Target</Label>
-              <Input type="number" {...register("dailyTarget")} />
+              <Input
+                type="number"
+                {...register("dailyTarget", { valueAsNumber: true })}
+              />
             </div>
           </div>
           <div className="space-y-1.5">

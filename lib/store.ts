@@ -278,6 +278,23 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
+  createOfficer: async (input) => {
+    const created = await api.createOfficer(input);
+    set((state) => ({ officers: [...state.officers, created] }));
+  },
+
+  updateAsset: async (assetId, patch) => {
+    const updated = await api.updateAsset(assetId, patch);
+    set((state) => ({
+      assets: state.assets.map((a) => (a.id === assetId ? updated : a)),
+    }));
+  },
+
+  createComplaint: async (input) => {
+    const created = await api.createComplaint(input);
+    set((state) => ({ complaints: [created, ...state.complaints] }));
+  },
+
   flushPendingSync: () =>
     set((state) => ({
       pendingSync: state.pendingSync.map((item) => ({ ...item, status: "synced" })),
