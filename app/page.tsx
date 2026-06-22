@@ -95,9 +95,29 @@ const STEPS = [
   },
 ];
 
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "FieldWatch",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  description:
+    "A digital platform for water and sanitation institutions in Kenya and East Africa to manage field officer inspections, infrastructure assets, customer complaints, and service delivery in real time.",
+  url: "https://washfieldofficer.vercel.app",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+};
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-brand-surface">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+      />
       <header className="sticky top-0 z-10 border-b border-border bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
