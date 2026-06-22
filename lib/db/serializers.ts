@@ -83,3 +83,14 @@ export function serializeDailySummary(row: DailySummaryRow): DailySummary {
     distance_covered_km: Number(row.distanceCoveredKm),
   };
 }
+
+export function serializeReport(row: ReportRow): GeneratedReport {
+  return {
+    id: row.id,
+    reportType: row.reportType,
+    format: row.format as "pdf" | "csv",
+    filters: row.filters as Record<string, unknown>,
+    generatedBy: row.generatedBy,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
