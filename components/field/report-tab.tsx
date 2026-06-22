@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Camera, Crosshair, Loader2 } from "lucide-react";
+import { Camera, Crosshair, Loader2, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -32,15 +32,21 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+interface Photo {
+  url: string;
+  file: File;
+}
+
 export function ReportTab() {
   const assets = useAppStore((s) => s.assets);
   const submitInspection = useAppStore((s) => s.submitInspection);
   const pendingSync = useAppStore((s) => s.pendingSync);
   const currentFieldOfficerId = useAppStore((s) => s.currentFieldOfficerId);
 
-  const [photoCount, setPhotoCount] = useState(0);
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [capturing, setCapturing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const mySites = assets.filter((a) => a.assignedOfficerId === currentFieldOfficerId);
 
@@ -70,15 +76,39 @@ export function ReportTab() {
       toast.error("Select a site first");
       return;
     }
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported on this device");
+      return;
+    }
     setCapturing(true);
-    setTimeout(() => {
-      setGps({
-        lat: parseFloat((selectedAsset.lat + (Math.random() - 0.5) * 0.0006).toFixed(6)),
-        lng: parseFloat((selectedAsset.lng + (Math.random() - 0.5) * 0.0006).toFixed(6)),
-      });
-      setCapturing(false);
-      toast.success("GPS location captured");
-    }, 900);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setGps({ lat: position.coords.latitude, lng: position.coords.longitude });
+        setCapturing(false);
+        toast.success("GPS location captured");
+      },
+      (error) => {
+        setCapturing(false);
+        toast.error("Failed to capture GPS location", { description: error.message });
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    const slotsLeft = 4 - photos.length;
+    const newPhotos = files.slice(0, slotsLeft).map((file) => ({ file, url: URL.createObjectURL(file) }));
+    setPhotos((prev) => [...prev, ...newPhotos]);
+    e.target.value = "";
+  }
+
+  function removePhoto(index: number) {
+    setPhotos((prev) => {
+      URL.revokeObjectURL(prev[index].url);
+      return prev.filter((_, i) => i !== index);
+    });
   }
 
   function onSubmit(values: FormValues) {
@@ -92,13 +122,14 @@ export function ReportTab() {
       infrastructure_condition: values.infrastructure_condition,
       chlorine_level: values.chlorine_level,
       notes: values.notes,
-      photo_count: photoCount,
+      photo_count: photos.length,
       gps_lat: gps.lat,
       gps_lng: gps.lng,
     });
     toast.success("Inspection report submitted and queued for sync");
     reset();
-    setPhotoCount(0);
+    photos.forEach((p) => URL.revokeObjectURL(p.url));
+    setPhotos([]);
     setGps(null);
   }
 
@@ -198,19 +229,33 @@ export function ReportTab() {
 
           <div className="space-y-1.5">
             <Label>Photos</Label>
-            <div className="flex gap-2">
-              {Array.from({ length: photoCount }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex size-14 items-center justify-center rounded-md bg-muted text-muted-foreground"
-                >
-                  <Camera className="size-5" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              className="hidden"
+              onChange={handlePhotoSelect}
+            />
+            <div className="flex flex-wrap gap-2">
+              {photos.map((photo, i) => (
+                <div key={photo.url} className="relative size-14 overflow-hidden rounded-md bg-muted">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photo.url} alt={`Photo ${i + 1}`} className="size-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    className="absolute right-0.5 top-0.5 flex size-4 items-center justify-center rounded-full bg-black/60 text-white"
+                  >
+                    <X className="size-2.5" />
+                  </button>
                 </div>
               ))}
-              {photoCount < 4 && (
+              {photos.length < 4 && (
                 <button
                   type="button"
-                  onClick={() => setPhotoCount((c) => c + 1)}
+                  onClick={() => fileInputRef.current?.click()}
                   className="flex size-14 items-center justify-center rounded-md border border-dashed border-border text-muted-foreground hover:bg-muted"
                 >
                   <Camera className="size-5" />
@@ -238,7 +283,7 @@ export function ReportTab() {
             </Button>
             {gps && (
               <p className="text-xs text-muted-foreground">
-                Lat {gps.lat}, Lng {gps.lng}
+                Lat {gps.lat.toFixed(6)}, Lng {gps.lng.toFixed(6)}
               </p>
             )}
           </div>

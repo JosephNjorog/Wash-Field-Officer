@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ComplaintStatusBadge } from "@/components/shared/status-badge";
+import { NewComplaintDialog } from "@/components/field/new-complaint-dialog";
 import { useAppStore } from "@/lib/store";
 import { cn, timeSince } from "@/lib/utils";
 
@@ -16,6 +17,7 @@ export function ComplaintsTab() {
   const currentFieldOfficerId = useAppStore((s) => s.currentFieldOfficerId);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [note, setNote] = useState("");
+  const [newOpen, setNewOpen] = useState(false);
 
   const myComplaints = complaints
     .filter((c) => c.assignedOfficerId === currentFieldOfficerId)
@@ -23,7 +25,12 @@ export function ComplaintsTab() {
 
   return (
     <div className="space-y-3">
-      <p className="text-sm font-semibold text-foreground">My Assigned Complaints</p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-foreground">My Assigned Complaints</p>
+        <Button size="sm" variant="outline" className="gap-1" onClick={() => setNewOpen(true)}>
+          <Plus className="size-3.5" /> New
+        </Button>
+      </div>
       {myComplaints.map((complaint) => {
         const expanded = expandedId === complaint.id;
         return (
@@ -95,6 +102,7 @@ export function ComplaintsTab() {
       {myComplaints.length === 0 && (
         <p className="text-sm text-muted-foreground">No complaints assigned to you.</p>
       )}
+      <NewComplaintDialog open={newOpen} onOpenChange={setNewOpen} />
     </div>
   );
 }
