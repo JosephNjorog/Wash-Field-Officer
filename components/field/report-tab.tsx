@@ -26,7 +26,7 @@ const schema = z.object({
   assetId: z.string().min(1, "Select a site"),
   water_flow_status: z.enum(["Normal", "Reduced", "No Flow"]),
   infrastructure_condition: z.enum(["Good", "Fair", "Poor", "Critical"]),
-  chlorine_level: z.coerce.number().min(0, "Must be 0 or more").max(5, "Too high"),
+  chlorine_level: z.number().min(0, "Must be 0 or more").max(5, "Too high"),
   notes: z.string().min(5, "Add a short observation"),
 });
 
@@ -179,7 +179,11 @@ export function ReportTab() {
 
           <div className="space-y-1.5">
             <Label>Chlorine Level (mg/L)</Label>
-            <Input type="number" step="0.01" {...register("chlorine_level")} />
+            <Input
+              type="number"
+              step="0.01"
+              {...register("chlorine_level", { valueAsNumber: true })}
+            />
             {errors.chlorine_level && (
               <p className="text-xs text-destructive">{errors.chlorine_level.message}</p>
             )}
