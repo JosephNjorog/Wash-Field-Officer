@@ -1,10 +1,12 @@
 "use client";
 
-import { toast } from "sonner";
+import { useState } from "react";
 import { ClipboardPlus, Flag, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AssetStatusBadge } from "@/components/shared/status-badge";
+import { AssignInspectionDialog } from "@/components/assets/assign-inspection-dialog";
+import { LogIssueDialog } from "@/components/assets/log-issue-dialog";
 import type { Asset, Inspection, Officer } from "@/lib/types";
 import { ASSET_TYPE_LABELS, formatDateTime } from "@/lib/utils";
 
@@ -19,6 +21,9 @@ export function AssetDetailPanel({
   officer: Officer | undefined;
   onClose: () => void;
 }) {
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [issueOpen, setIssueOpen] = useState(false);
+
   const history = inspections
     .filter((i) => i.assetId === asset.id)
     .sort((a, b) => (a.formData.submitted_at < b.formData.submitted_at ? 1 : -1))
@@ -83,20 +88,18 @@ export function AssetDetailPanel({
             size="sm"
             variant="outline"
             className="gap-1.5"
-            onClick={() => toast.success(`Inspection assigned for ${asset.name}`)}
+            onClick={() => setAssignOpen(true)}
           >
             <ClipboardPlus className="size-3.5" /> Assign Inspection
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5"
-            onClick={() => toast.success(`Issue logged for ${asset.name}`)}
-          >
+          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setIssueOpen(true)}>
             <Flag className="size-3.5" /> Log Issue
           </Button>
         </div>
       </CardContent>
+
+      <AssignInspectionDialog asset={asset} open={assignOpen} onOpenChange={setAssignOpen} />
+      <LogIssueDialog asset={asset} open={issueOpen} onOpenChange={setIssueOpen} />
     </Card>
   );
 }
