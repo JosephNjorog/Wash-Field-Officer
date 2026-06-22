@@ -170,7 +170,7 @@ export default function ReportsPage() {
       await logReport({
         reportType: filters.reportType,
         format,
-        filters: filters,
+        filters: { ...filters },
         generatedBy: session?.name ?? "Supervisor",
       });
 
