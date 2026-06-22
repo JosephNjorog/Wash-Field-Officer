@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { AssetStatusBadge } from "@/components/shared/status-badge";
 import { AssetMapClient } from "@/components/maps/asset-map-client";
+import type { FlyToTarget } from "@/components/maps/asset-map";
 import { AssetFilters, type AssetFilterState } from "@/components/assets/asset-filters";
 import { AssetDetailPanel } from "@/components/assets/asset-detail-panel";
 import { useAppStore } from "@/lib/store";
@@ -58,6 +59,11 @@ export default function AssetsPage() {
 
   const selectedAsset = assets.find((a) => a.id === selectedId) ?? null;
   const selectedOfficer = officers.find((o) => o.id === selectedAsset?.assignedOfficerId);
+
+  const flyTo: FlyToTarget | null = useMemo(
+    () => (selectedAsset ? { lat: selectedAsset.lat, lng: selectedAsset.lng, zoom: 15 } : null),
+    [selectedAsset]
+  );
 
   function handleSelect(asset: Asset) {
     setSelectedId(asset.id);
@@ -139,6 +145,7 @@ export default function AssetsPage() {
                 assets={filteredAssets}
                 selectedAssetId={selectedId}
                 onAssetSelect={handleSelect}
+                flyTo={flyTo}
                 height={420}
                 zoom={6.2}
               />
