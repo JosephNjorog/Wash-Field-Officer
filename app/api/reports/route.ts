@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { reports } from "@/lib/db/schema";
 import { serializeReport } from "@/lib/db/serializers";
 
+export const dynamic = "force-dynamic";
+
 const createReportSchema = z.object({
   reportType: z.string().min(1),
   format: z.enum(["pdf", "csv"]),

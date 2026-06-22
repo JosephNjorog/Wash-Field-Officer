@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { assets } from "@/lib/db/schema";
 import { serializeAsset } from "@/lib/db/serializers";
 
+export const dynamic = "force-dynamic";
+
 const patchSchema = z.object({
   assignedOfficerId: z.string().min(1).optional(),
   status: z.enum(["functional", "needs-repair", "non-functional", "decommissioned"]).optional(),

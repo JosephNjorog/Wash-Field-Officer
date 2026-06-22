@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { complaints } from "@/lib/db/schema";
 import { serializeComplaint } from "@/lib/db/serializers";
 
+export const dynamic = "force-dynamic";
+
 const patchSchema = z.object({
   status: z.enum(["open", "assigned", "in-progress", "resolved"]).optional(),
   assignedOfficerId: z.string().nullable().optional(),
