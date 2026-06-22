@@ -3,6 +3,8 @@ import { ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { officers } from "@/lib/db/schema";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const rows = await db
     .select({

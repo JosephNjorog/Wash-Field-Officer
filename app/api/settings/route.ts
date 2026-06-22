@@ -3,6 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { appSettings } from "@/lib/db/schema";
 
+export const dynamic = "force-dynamic";
+
 const DEFAULT_SUPERVISOR_PROFILE = {
   name: "James Kariuki",
   email: "james.kariuki@fieldwatch.go.ke",
