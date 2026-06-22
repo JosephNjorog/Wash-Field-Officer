@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, WifiOff, Wifi, CloudUpload, LogOut } from "lucide-react";
+import { WifiOff, Wifi, CloudUpload, LogOut } from "lucide-react";
 import { MobileFrame, type FieldTab } from "@/components/field/mobile-frame";
 import { TasksTab } from "@/components/field/tasks-tab";
 import { ReportTab } from "@/components/field/report-tab";

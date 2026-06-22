@@ -9,7 +9,6 @@ import {
   ClipboardList,
   FileBarChart2,
   Settings,
-  Smartphone,
   ChevronsLeft,
   ChevronsRight,
   Wifi,
@@ -81,30 +80,6 @@ export function Sidebar() {
             </Tooltip>
           );
         })}
-
-        <div className="my-3 border-t border-white/10" />
-
-        {collapsed ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href="/field"
-                className="flex items-center justify-center rounded-md px-0 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white"
-              >
-                <Smartphone className="size-[18px]" />
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right">Field Officer View</TooltipContent>
-          </Tooltip>
-        ) : (
-          <Link
-            href="/field"
-            className="flex items-center gap-3 rounded-md border border-dashed border-white/25 px-3 py-2.5 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white"
-          >
-            <Smartphone className="size-[18px] shrink-0" />
-            <span>Switch to Field View</span>
-          </Link>
-        )}
       </nav>
 
       <div className="border-t border-white/10 p-3">

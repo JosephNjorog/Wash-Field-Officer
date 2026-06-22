@@ -16,6 +16,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/field", request.url));
   }
 
+  if (role === "supervisor" && isFieldPath) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
   if (pathname === "/" && role) {
     return NextResponse.redirect(
       new URL(role === "officer" ? "/field" : "/dashboard", request.url)
