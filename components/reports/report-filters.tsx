@@ -42,11 +42,15 @@ export function ReportFilters({
   onChange,
   regionOptions,
   officerOptions,
+  onExport,
+  exporting,
 }: {
   filters: ReportFilterState;
   onChange: (filters: ReportFilterState) => void;
   regionOptions: string[];
   officerOptions: string[];
+  onExport: (format: "pdf" | "csv") => void;
+  exporting: "pdf" | "csv" | null;
 }) {
   return (
     <Card>
