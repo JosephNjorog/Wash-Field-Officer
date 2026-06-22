@@ -37,9 +37,12 @@ export default function FieldPage() {
       router.replace("/");
       return;
     }
-    const officerId = session.role === "officer" ? session.officerId : officers[0]?.id;
-    if (officerId) setCurrentFieldOfficer(officerId);
-  }, [hydrated, session, officers, setCurrentFieldOfficer, router]);
+    if (session.role !== "officer") {
+      router.replace("/dashboard");
+      return;
+    }
+    if (session.officerId) setCurrentFieldOfficer(session.officerId);
+  }, [hydrated, session, setCurrentFieldOfficer, router]);
 
   const officer = officers.find((o) => o.id === currentFieldOfficerId);
 
@@ -66,24 +69,15 @@ export default function FieldPage() {
 
   return (
     <div className="relative">
-      {session.role === "supervisor" ? (
-        <Link
-          href="/dashboard"
-          className="fixed left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-secondary shadow-md hover:bg-brand-tint"
-        >
-          <LayoutDashboard className="size-3.5" /> Dashboard View
-        </Link>
-      ) : (
-        <button
-          onClick={() => {
-            logout();
-            router.push("/");
-          }}
-          className="fixed left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-destructive shadow-md hover:bg-destructive/10"
-        >
-          <LogOut className="size-3.5" /> Sign Out
-        </button>
-      )}
+      <button
+        onClick={() => {
+          logout();
+          router.push("/");
+        }}
+        className="fixed left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-destructive shadow-md hover:bg-destructive/10"
+      >
+        <LogOut className="size-3.5" /> Sign Out
+      </button>
 
       <div className="fixed right-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-medium shadow-md">
         {offlineMode ? (
