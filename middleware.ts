@@ -13,7 +13,7 @@ export function middleware(request: NextRequest) {
   const role = request.cookies.get(ROLE_COOKIE)?.value;
 
   if (pathname.startsWith("/api/")) {
-    if (pathname.startsWith("/api/public/")) {
+    if (pathname.startsWith("/api/public/") || pathname === "/api/auth/login") {
       return NextResponse.next();
     }
     if (!role) {

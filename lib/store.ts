@@ -6,6 +6,7 @@ import { clearQueue, enqueue, getQueue } from "@/lib/offline-queue";
 import type {
   ActivityEvent,
   Asset,
+  CheckInRecord,
   Complaint,
   ComplaintStatus,
   DailySummary,
@@ -31,17 +32,28 @@ const DEFAULT_SYSTEM_PREFERENCES: SystemPreferences = {
   defaultDailyTarget: 6,
 };
 
-function mergeFieldTasks(
+function deriveFieldTasks(
   officerId: string,
   assets: Asset[],
-  existing: Record<string, FieldSiteTask>
+  inspections: Inspection[],
+  checkIns: CheckInRecord[]
 ): Record<string, FieldSiteTask> {
   const assigned = assets.filter((a) => a.assignedOfficerId === officerId);
-  const next: Record<string, FieldSiteTask> = {};
+  const tasks: Record<string, FieldSiteTask> = {};
   assigned.forEach((asset) => {
-    next[asset.id] = existing[asset.id] ?? { assetId: asset.id, status: "Pending", checkInAt: null };
+    const hasInspection = inspections.some(
+      (i) => i.officerId === officerId && i.assetId === asset.id
+    );
+    const latestCheckIn = checkIns
+      .filter((c) => c.officerId === officerId && c.assetId === asset.id)
+      .sort((a, b) => (a.checkedInAt < b.checkedInAt ? 1 : -1))[0];
+    tasks[asset.id] = {
+      assetId: asset.id,
+      status: hasInspection ? "Done" : latestCheckIn ? "Checked In" : "Pending",
+      checkInAt: latestCheckIn?.checkedInAt ?? null,
+    };
   });
-  return next;
+  return tasks;
 }
 
 interface AppState {
@@ -51,6 +63,7 @@ interface AppState {
   complaints: Complaint[];
   dailySummaries: DailySummary[];
   reports: GeneratedReport[];
+  checkIns: CheckInRecord[];
   supervisorProfile: SupervisorProfile;
   systemPreferences: SystemPreferences;
   activity: ActivityEvent[];
@@ -142,6 +155,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   complaints: [],
   dailySummaries: [],
   reports: [],
+  checkIns: [],
   supervisorProfile: DEFAULT_SUPERVISOR_PROFILE,
   systemPreferences: DEFAULT_SYSTEM_PREFERENCES,
   activity: [],
@@ -157,7 +171,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (get().loading) return;
     set({ loading: true, loadError: null });
     try {
-      const [officers, assets, inspections, complaints, dailySummaries, reports] =
+      const [officers, assets, inspections, complaints, dailySummaries, reports, checkIns] =
         await Promise.all([
           api.getOfficers(),
           api.getAssets(),
@@ -165,6 +179,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           api.getComplaints(),
           api.getDailySummaries(),
           api.getReports(),
+          api.getCheckIns(),
         ]);
       set((state) => ({
         officers,
@@ -173,10 +188,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         complaints,
         dailySummaries,
         reports,
+        checkIns,
         loading: false,
         loaded: true,
         fieldTasks: state.currentFieldOfficerId
-          ? mergeFieldTasks(state.currentFieldOfficerId, assets, state.fieldTasks)
+          ? deriveFieldTasks(state.currentFieldOfficerId, assets, inspections, checkIns)
           : state.fieldTasks,
       }));
     } catch (err) {
@@ -187,10 +203,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setCurrentFieldOfficer: (officerId) =>
     set((state) => ({
       currentFieldOfficerId: officerId,
-      fieldTasks:
-        state.currentFieldOfficerId === officerId
-          ? state.fieldTasks
-          : mergeFieldTasks(officerId, state.assets, {}),
+      fieldTasks: deriveFieldTasks(officerId, state.assets, state.inspections, state.checkIns),
     })),
 
   toggleOfflineMode: () => {
@@ -240,15 +253,52 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (get().offlineMode) {
       const now = new Date().toISOString();
       enqueue({ type: "check-in", payload: { officerId: officer.id, assetId } });
-      set((state) => ({
-        fieldTasks: {
-          ...state.fieldTasks,
-          [assetId]: { assetId, status: "Checked In", checkInAt: now },
-        },
+      set((state) => {
+        const checkIns = [
+          { id: -Date.now(), officerId: officer.id, assetId, checkedInAt: now },
+          ...state.checkIns,
+        ];
+        return {
+          checkIns,
+          fieldTasks: deriveFieldTasks(officer.id, state.assets, state.inspections, checkIns),
+          activity: [
+            pushActivity({
+              type: "check-in",
+              text: `Checked in at ${asset.name} (offline)`,
+              officerName: officer.name,
+              href: `/assets?asset=${asset.id}`,
+            }),
+            ...state.activity,
+          ],
+          pendingSync: [
+            {
+              id: `SYNC-${Date.now()}`,
+              type: "check-in",
+              label: `Check-in: ${asset.name}`,
+              createdAt: now,
+              status: "offline",
+            },
+            ...state.pendingSync,
+          ],
+        };
+      });
+      return;
+    }
+
+    const result = await api.checkIn(officer.id, assetId);
+
+    set((state) => {
+      const checkIns = [
+        { id: -Date.now(), officerId: officer.id, assetId, checkedInAt: result.checkedInAt },
+        ...state.checkIns,
+      ];
+      return {
+        checkIns,
+        fieldTasks: deriveFieldTasks(officer.id, state.assets, state.inspections, checkIns),
         activity: [
           pushActivity({
             type: "check-in",
-            text: `Checked in at ${asset.name} (offline)`,
+            text: `Checked in at ${asset.name}`,
             officerName: officer.name,
             href: `/assets?asset=${asset.id}`,
           }),
@@ -259,42 +309,13 @@ export const useAppStore = create<AppState>((set, get) => ({
             id: `SYNC-${Date.now()}`,
             type: "check-in",
             label: `Check-in: ${asset.name}`,
-            createdAt: now,
-            status: "offline",
+            createdAt: result.checkedInAt,
+            status: "synced",
           },
           ...state.pendingSync,
         ],
-      }));
-      return;
-    }
-
-    const result = await api.checkIn(officer.id, assetId);
-
-    set((state) => ({
-      fieldTasks: {
-        ...state.fieldTasks,
-        [assetId]: { assetId, status: "Checked In", checkInAt: result.checkedInAt },
-      },
-      activity: [
-        pushActivity({
-          type: "check-in",
-          text: `Checked in at ${asset.name}`,
-          officerName: officer.name,
-          href: `/assets?asset=${asset.id}`,
-        }),
-        ...state.activity,
-      ],
-      pendingSync: [
-        {
-          id: `SYNC-${Date.now()}`,
-          type: "check-in",
-          label: `Check-in: ${asset.name}`,
-          createdAt: result.checkedInAt,
-          status: "synced",
-        },
-        ...state.pendingSync,
-      ],
-    }));
+      };
+    });
   },
 
   submitInspection: async (input) => {
@@ -311,19 +332,52 @@ export const useAppStore = create<AppState>((set, get) => ({
         formData: { ...input, submitted_at: now, synced_at: null },
       };
       enqueue({ type: "inspection", payload: { officerId: officer.id, ...input } });
-      set((state) => ({
-        inspections: [localInspection, ...state.inspections],
-        assets: state.assets.map((a) => (a.id === input.assetId ? { ...a, lastInspected: now } : a)),
-        fieldTasks: state.fieldTasks[input.assetId]
-          ? {
-              ...state.fieldTasks,
-              [input.assetId]: { ...state.fieldTasks[input.assetId], status: "Done" },
-            }
-          : state.fieldTasks,
+      set((state) => {
+        const inspections = [localInspection, ...state.inspections];
+        return {
+          inspections,
+          assets: state.assets.map((a) =>
+            a.id === input.assetId ? { ...a, lastInspected: now } : a
+          ),
+          fieldTasks: deriveFieldTasks(officer.id, state.assets, inspections, state.checkIns),
+          activity: [
+            pushActivity({
+              type: "inspection",
+              text: `Submitted inspection report for ${asset.name} (offline)`,
+              officerName: officer.name,
+              href: `/assets?asset=${asset.id}`,
+            }),
+            ...state.activity,
+          ],
+          pendingSync: [
+            {
+              id: `SYNC-${Date.now()}`,
+              type: "inspection",
+              label: `Inspection: ${asset.name}`,
+              createdAt: now,
+              status: "offline",
+            },
+            ...state.pendingSync,
+          ],
+        };
+      });
+      return;
+    }
+
+    const inspection = await api.submitInspection({ officerId: officer.id, ...input });
+
+    set((state) => {
+      const inspections = [inspection, ...state.inspections];
+      return {
+        inspections,
+        assets: state.assets.map((a) =>
+          a.id === input.assetId ? { ...a, lastInspected: inspection.formData.submitted_at } : a
+        ),
+        fieldTasks: deriveFieldTasks(officer.id, state.assets, inspections, state.checkIns),
         activity: [
           pushActivity({
             type: "inspection",
-            text: `Submitted inspection report for ${asset.name} (offline)`,
+            text: `Submitted inspection report for ${asset.name}`,
             officerName: officer.name,
             href: `/assets?asset=${asset.id}`,
           }),
@@ -334,48 +388,13 @@ export const useAppStore = create<AppState>((set, get) => ({
             id: `SYNC-${Date.now()}`,
             type: "inspection",
             label: `Inspection: ${asset.name}`,
-            createdAt: now,
-            status: "offline",
+            createdAt: inspection.formData.submitted_at,
+            status: "synced",
           },
           ...state.pendingSync,
         ],
-      }));
-      return;
-    }
-
-    const inspection = await api.submitInspection({ officerId: officer.id, ...input });
-
-    set((state) => ({
-      inspections: [inspection, ...state.inspections],
-      assets: state.assets.map((a) =>
-        a.id === input.assetId ? { ...a, lastInspected: inspection.formData.submitted_at } : a
-      ),
-      fieldTasks: state.fieldTasks[input.assetId]
-        ? {
-            ...state.fieldTasks,
-            [input.assetId]: { ...state.fieldTasks[input.assetId], status: "Done" },
-          }
-        : state.fieldTasks,
-      activity: [
-        pushActivity({
-          type: "inspection",
-          text: `Submitted inspection report for ${asset.name}`,
-          officerName: officer.name,
-          href: `/assets?asset=${asset.id}`,
-        }),
-        ...state.activity,
-      ],
-      pendingSync: [
-        {
-          id: `SYNC-${Date.now()}`,
-          type: "inspection",
-          label: `Inspection: ${asset.name}`,
-          createdAt: inspection.formData.submitted_at,
-          status: "synced",
-        },
-        ...state.pendingSync,
-      ],
-    }));
+      };
+    });
   },
 
   updateComplaintStatus: async (complaintId, status, resolutionNote) => {

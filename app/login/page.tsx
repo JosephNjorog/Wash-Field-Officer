@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Droplets, LayoutDashboard, MapPinned, ClipboardList, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -34,6 +35,12 @@ export default function LoginPage() {
   const [officers, setOfficers] = useState<PublicOfficer[]>([]);
   const [officerId, setOfficerId] = useState("");
 
+  const [supervisorEmail, setSupervisorEmail] = useState("james.kariuki@fieldwatch.go.ke");
+  const [supervisorPassword, setSupervisorPassword] = useState("");
+  const [officerPassword, setOfficerPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
   useEffect(() => {
     fetch("/api/public/officers")
       .then((res) => res.json())
@@ -44,16 +51,54 @@ export default function LoginPage() {
       .catch(() => {});
   }, []);
 
-  function signInAsSupervisor() {
-    login({ role: "supervisor", officerId: null, name: "James Kariuki" });
-    router.push("/dashboard");
+  async function signInAsSupervisor() {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: "supervisor",
+          email: supervisorEmail,
+          password: supervisorPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Invalid email or password");
+        return;
+      }
+      login({ role: "supervisor", officerId: null, name: data.name });
+      router.push("/dashboard");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  function signInAsOfficer() {
-    const officer = officers.find((o) => o.id === officerId);
-    if (!officer) return;
-    login({ role: "officer", officerId: officer.id, name: officer.name });
-    router.push("/field");
+  async function signInAsOfficer() {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "officer", officerId, password: officerPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Invalid password");
+        return;
+      }
+      login({ role: "officer", officerId: data.officerId, name: data.name });
+      router.push("/field");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -100,7 +145,10 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <Tabs defaultValue="supervisor">
+          <Tabs
+            defaultValue="supervisor"
+            onValueChange={() => setError(null)}
+          >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="supervisor">Supervisor</TabsTrigger>
               <TabsTrigger value="officer">Field Officer</TabsTrigger>
@@ -111,13 +159,29 @@ export default function LoginPage() {
                 Sign in as the management supervisor to access the dashboard, asset registry,
                 complaints queue, and reports.
               </p>
-              <div className="rounded-md border border-border bg-white p-3">
-                <p className="text-sm font-medium text-foreground">James Kariuki</p>
-                <p className="text-xs text-muted-foreground">Supervisor · Head Office</p>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Email</Label>
+                <Input
+                  type="email"
+                  value={supervisorEmail}
+                  onChange={(e) => setSupervisorEmail(e.target.value)}
+                />
               </div>
-              <Button className="w-full" onClick={signInAsSupervisor}>
-                Sign in as Supervisor
+              <div className="space-y-1.5">
+                <Label className="text-xs">Password</Label>
+                <Input
+                  type="password"
+                  value={supervisorPassword}
+                  onChange={(e) => setSupervisorPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && signInAsSupervisor()}
+                />
+              </div>
+              <Button className="w-full" onClick={signInAsSupervisor} disabled={submitting}>
+                {submitting ? "Signing in..." : "Sign in as Supervisor"}
               </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                Demo password: <span className="font-mono">FieldWatch2026!</span>
+              </p>
             </TabsContent>
 
             <TabsContent value="officer" className="space-y-4 pt-4">
@@ -139,11 +203,33 @@ export default function LoginPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button className="w-full" onClick={signInAsOfficer} disabled={!officerId}>
-                Sign in as Field Officer
+              <div className="space-y-1.5">
+                <Label className="text-xs">Password</Label>
+                <Input
+                  type="password"
+                  value={officerPassword}
+                  onChange={(e) => setOfficerPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && signInAsOfficer()}
+                />
+              </div>
+              <Button
+                className="w-full"
+                onClick={signInAsOfficer}
+                disabled={!officerId || submitting}
+              >
+                {submitting ? "Signing in..." : "Sign in as Field Officer"}
               </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                Demo password: <span className="font-mono">Officer2026!</span>
+              </p>
             </TabsContent>
           </Tabs>
+
+          {error && (
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-center text-sm text-destructive">
+              {error}
+            </p>
+          )}
         </div>
       </div>
     </div>

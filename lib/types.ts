@@ -99,6 +99,13 @@ export interface FieldSiteTask {
   checkInAt: string | null;
 }
 
+export interface CheckInRecord {
+  id: number;
+  officerId: string;
+  assetId: string;
+  checkedInAt: string;
+}
+
 export type SyncStatus = "synced" | "pending" | "offline";
 
 export interface PendingSyncItem {

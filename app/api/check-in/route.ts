@@ -11,6 +11,18 @@ const checkInSchema = z.object({
   assetId: z.string().min(1),
 });
 
+export async function GET() {
+  const rows = await db.select().from(checkIns);
+  return NextResponse.json({
+    checkIns: rows.map((r) => ({
+      id: r.id,
+      officerId: r.officerId,
+      assetId: r.assetId,
+      checkedInAt: r.checkedInAt.toISOString(),
+    })),
+  });
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const parsed = checkInSchema.safeParse(body);

@@ -1,5 +1,6 @@
 import type {
   Asset,
+  CheckInRecord,
   Complaint,
   ComplaintStatus,
   DailySummary,
@@ -36,6 +37,8 @@ export const api = {
       (r) => r.daily_summaries
     ),
   getReports: () => request<{ reports: GeneratedReport[] }>("/api/reports").then((r) => r.reports),
+  getCheckIns: () =>
+    request<{ checkIns: CheckInRecord[] }>("/api/check-in").then((r) => r.checkIns),
 
   createReport: (input: {
     reportType: string;
