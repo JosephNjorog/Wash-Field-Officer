@@ -119,6 +119,7 @@ export function MapSection({ assets, officers }: { assets: Asset[]; officers: Of
               <AssetStatusBadge status={selectedAsset.status} />
               <button
                 onClick={() => setSelectedAssetId(null)}
+                aria-label="Close asset details"
                 className="text-muted-foreground hover:text-foreground"
               >
                 <X className="size-4" />
@@ -142,6 +143,7 @@ export function MapSection({ assets, officers }: { assets: Asset[]; officers: Of
               <OfficerStatusBadge status={selectedOfficerLoc.officer.status} />
               <button
                 onClick={() => setSelectedOfficerId(null)}
+                aria-label="Close officer details"
                 className="text-muted-foreground hover:text-foreground"
               >
                 <X className="size-4" />

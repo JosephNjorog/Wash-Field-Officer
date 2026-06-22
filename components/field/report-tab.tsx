@@ -246,6 +246,7 @@ export function ReportTab() {
                   <button
                     type="button"
                     onClick={() => removePhoto(i)}
+                    aria-label={`Remove photo ${i + 1}`}
                     className="absolute right-0.5 top-0.5 flex size-4 items-center justify-center rounded-full bg-black/60 text-white"
                   >
                     <X className="size-2.5" />
