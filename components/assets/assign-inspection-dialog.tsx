@@ -72,11 +72,13 @@ export function AssignInspectionDialog({
               <SelectValue placeholder="Select an officer" />
             </SelectTrigger>
             <SelectContent>
-              {officers.map((o) => (
-                <SelectItem key={o.id} value={o.id}>
-                  {o.name} — {o.region}
-                </SelectItem>
-              ))}
+              {officers
+                .filter((o) => o.status !== "Inactive")
+                .map((o) => (
+                  <SelectItem key={o.id} value={o.id}>
+                    {o.name} — {o.region}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>

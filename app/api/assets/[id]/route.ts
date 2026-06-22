@@ -7,7 +7,7 @@ import { serializeAsset } from "@/lib/db/serializers";
 
 const patchSchema = z.object({
   assignedOfficerId: z.string().min(1).optional(),
-  status: z.enum(["functional", "needs-repair", "non-functional"]).optional(),
+  status: z.enum(["functional", "needs-repair", "non-functional", "decommissioned"]).optional(),
   conditionScore: z.number().int().min(0).max(100).optional(),
 });
 

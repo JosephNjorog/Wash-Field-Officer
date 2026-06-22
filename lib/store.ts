@@ -66,7 +66,7 @@ interface AppState {
     status: ComplaintStatus,
     resolutionNote?: string
   ) => Promise<void>;
-  assignComplaint: (complaintId: string, officerId: string) => Promise<void>;
+  assignComplaint: (complaintId: string, officerId: string | null) => Promise<void>;
   updateOfficer: (
     officerId: string,
     patch: {
@@ -408,9 +408,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     const existing = get().complaints.find((c) => c.id === complaintId);
     if (!existing) return;
 
+    const status =
+      officerId === null
+        ? existing.status === "resolved"
+          ? undefined
+          : "open"
+        : existing.status === "open"
+          ? "assigned"
+          : undefined;
+
     const updated = await api.updateComplaint(complaintId, {
       assignedOfficerId: officerId,
-      status: existing.status === "open" ? "assigned" : undefined,
+      status,
     });
 
     set((state) => ({

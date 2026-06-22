@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
+import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Pencil } from "lucide-react";
+import { Pencil, UserX, UserCheck } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -28,8 +30,26 @@ export function OfficerDetailSheet({
   const inspections = useAppStore((s) => s.inspections);
   const complaints = useAppStore((s) => s.complaints);
   const dailySummaries = useAppStore((s) => s.dailySummaries);
+  const updateOfficer = useAppStore((s) => s.updateOfficer);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   if (!officer) return null;
+
+  const isInactive = officer.status === "Inactive";
+
+  async function handleToggleActive() {
+    setTogglingStatus(true);
+    try {
+      await updateOfficer(officer!.id, { status: isInactive ? "Active" : "Inactive" });
+      toast.success(isInactive ? `${officer!.name} reactivated` : `${officer!.name} deactivated`);
+    } catch (err) {
+      toast.error("Failed to update officer status", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setTogglingStatus(false);
+    }
+  }
 
   const assignedAssets = assets.filter((a) => a.assignedOfficerId === officer.id);
   const officerInspections = inspections
@@ -60,9 +80,28 @@ export function OfficerDetailSheet({
               </span>
               {officer.name}
             </span>
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={onEdit}>
-              <Pencil className="size-3.5" /> Edit
-            </Button>
+            <span className="flex gap-2">
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={onEdit}>
+                <Pencil className="size-3.5" /> Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                disabled={togglingStatus}
+                onClick={handleToggleActive}
+              >
+                {isInactive ? (
+                  <>
+                    <UserCheck className="size-3.5" /> Reactivate
+                  </>
+                ) : (
+                  <>
+                    <UserX className="size-3.5" /> Deactivate
+                  </>
+                )}
+              </Button>
+            </span>
           </SheetTitle>
         </SheetHeader>
 

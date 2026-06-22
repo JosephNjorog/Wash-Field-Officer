@@ -11,6 +11,7 @@ const ASSET_STATUS_BADGE: Record<AssetStatus, string> = {
   functional: "bg-success/10 text-success border-success/30",
   "needs-repair": "bg-warning/10 text-warning border-warning/30",
   "non-functional": "bg-destructive/10 text-destructive border-destructive/30",
+  decommissioned: "bg-muted text-muted-foreground border-border",
 };
 
 export function AssetStatusBadge({ status }: { status: AssetStatus }) {

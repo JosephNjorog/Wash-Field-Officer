@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Droplets, LayoutDashboard, MapPinned, ClipboardList, Smartphone } from "lucide-react";
-import seed from "@/data/seed.json";
-import type { SeedData } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,7 +15,11 @@ import {
 } from "@/components/ui/select";
 import { useAuthStore } from "@/lib/auth-store";
 
-const officers = (seed as SeedData).officers;
+interface PublicOfficer {
+  id: string;
+  name: string;
+  region: string;
+}
 
 const FEATURES = [
   { icon: LayoutDashboard, text: "Real-time supervisor dashboard with live officer activity" },
@@ -29,7 +31,18 @@ const FEATURES = [
 export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
-  const [officerId, setOfficerId] = useState(officers[0].id);
+  const [officers, setOfficers] = useState<PublicOfficer[]>([]);
+  const [officerId, setOfficerId] = useState("");
+
+  useEffect(() => {
+    fetch("/api/public/officers")
+      .then((res) => res.json())
+      .then((data: { officers: PublicOfficer[] }) => {
+        setOfficers(data.officers);
+        if (data.officers[0]) setOfficerId(data.officers[0].id);
+      })
+      .catch(() => {});
+  }, []);
 
   function signInAsSupervisor() {
     login({ role: "supervisor", officerId: null, name: "James Kariuki" });
@@ -126,7 +139,7 @@ export default function LoginPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button className="w-full" onClick={signInAsOfficer}>
+              <Button className="w-full" onClick={signInAsOfficer} disabled={!officerId}>
                 Sign in as Field Officer
               </Button>
             </TabsContent>

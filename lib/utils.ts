@@ -57,18 +57,21 @@ export const ASSET_STATUS_LABELS: Record<AssetStatus, string> = {
   functional: "Functional",
   "needs-repair": "Needs Repair",
   "non-functional": "Non-Functional",
+  decommissioned: "Decommissioned",
 };
 
 export const ASSET_STATUS_COLORS: Record<AssetStatus, string> = {
   functional: "#2D6A4F",
   "needs-repair": "#856404",
   "non-functional": "#C0392B",
+  decommissioned: "#6B7280",
 };
 
 export const OFFICER_STATUS_COLORS: Record<OfficerStatus, string> = {
   Active: "bg-success/15 text-success border-success/30",
   Offline: "bg-muted text-muted-foreground border-border",
   Overdue: "bg-destructive/15 text-destructive border-destructive/30",
+  Inactive: "bg-muted text-muted-foreground border-border opacity-60",
 };
 
 export const COMPLAINT_STATUS_LABELS: Record<ComplaintStatus, string> = {

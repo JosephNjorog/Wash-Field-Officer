@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardPlus, Flag, X } from "lucide-react";
+import { toast } from "sonner";
+import { ClipboardPlus, Flag, X, PowerOff, Power } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AssetStatusBadge } from "@/components/shared/status-badge";
 import { AssignInspectionDialog } from "@/components/assets/assign-inspection-dialog";
 import { LogIssueDialog } from "@/components/assets/log-issue-dialog";
+import { useAppStore } from "@/lib/store";
 import type { Asset, Inspection, Officer } from "@/lib/types";
 import { ASSET_TYPE_LABELS, formatDateTime } from "@/lib/utils";
 
@@ -21,13 +23,33 @@ export function AssetDetailPanel({
   officer: Officer | undefined;
   onClose: () => void;
 }) {
+  const updateAsset = useAppStore((s) => s.updateAsset);
   const [assignOpen, setAssignOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
+  const [togglingStatus, setTogglingStatus] = useState(false);
+
+  const isDecommissioned = asset.status === "decommissioned";
 
   const history = inspections
     .filter((i) => i.assetId === asset.id)
     .sort((a, b) => (a.formData.submitted_at < b.formData.submitted_at ? 1 : -1))
     .slice(0, 5);
+
+  async function handleToggleDecommissioned() {
+    setTogglingStatus(true);
+    try {
+      await updateAsset(asset.id, { status: isDecommissioned ? "functional" : "decommissioned" });
+      toast.success(
+        isDecommissioned ? `${asset.name} reactivated` : `${asset.name} decommissioned`
+      );
+    } catch (err) {
+      toast.error("Failed to update asset status", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setTogglingStatus(false);
+    }
+  }
 
   return (
     <Card className="border-secondary/30">
@@ -40,7 +62,11 @@ export function AssetDetailPanel({
         </div>
         <div className="flex items-center gap-2">
           <AssetStatusBadge status={asset.status} />
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <button
+            onClick={onClose}
+            aria-label="Close asset details"
+            className="text-muted-foreground hover:text-foreground"
+          >
             <X className="size-4" />
           </button>
         </div>
@@ -83,7 +109,7 @@ export function AssetDetailPanel({
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
             variant="outline"
@@ -94,6 +120,23 @@ export function AssetDetailPanel({
           </Button>
           <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setIssueOpen(true)}>
             <Flag className="size-3.5" /> Log Issue
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            disabled={togglingStatus}
+            onClick={handleToggleDecommissioned}
+          >
+            {isDecommissioned ? (
+              <>
+                <Power className="size-3.5" /> Reactivate
+              </>
+            ) : (
+              <>
+                <PowerOff className="size-3.5" /> Decommission
+              </>
+            )}
           </Button>
         </div>
       </CardContent>

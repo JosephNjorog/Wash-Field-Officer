@@ -58,7 +58,7 @@ export function LogIssueDialog({
         region: asset.region,
         lat: asset.lat,
         lng: asset.lng,
-        assignedOfficerId: asset.assignedOfficerId || null,
+        assignedOfficerId: asset.assignedOfficerId,
         assetId: asset.id,
       });
       toast.success(`Issue logged for ${asset.name}`);

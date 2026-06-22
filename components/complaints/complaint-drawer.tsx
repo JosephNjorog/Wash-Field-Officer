@@ -23,6 +23,8 @@ import { useAppStore } from "@/lib/store";
 import type { Complaint } from "@/lib/types";
 import { formatDateTime, timeSince } from "@/lib/utils";
 
+const UNASSIGNED = "__unassigned__";
+
 export function ComplaintDrawer({
   complaint,
   onClose,
@@ -53,11 +55,12 @@ export function ComplaintDrawer({
     ...(complaint.resolvedAt ? [{ label: "Resolved", time: complaint.resolvedAt }] : []),
   ];
 
-  async function handleAssign(officerId: string) {
+  async function handleAssign(value: string) {
+    const officerId = value === UNASSIGNED ? null : value;
     setSaving("assign");
     try {
       await assignComplaint(complaint!.id, officerId);
-      toast.success("Complaint reassigned");
+      toast.success(officerId ? "Complaint reassigned" : "Complaint unassigned");
     } catch (err) {
       toast.error("Failed to reassign complaint", {
         description: err instanceof Error ? err.message : undefined,
@@ -116,7 +119,7 @@ export function ComplaintDrawer({
           <div className="space-y-1.5">
             <Label className="text-xs">Assigned Officer</Label>
             <Select
-              value={complaint.assignedOfficerId ?? ""}
+              value={complaint.assignedOfficerId ?? UNASSIGNED}
               onValueChange={handleAssign}
               disabled={saving === "assign"}
             >
@@ -124,11 +127,14 @@ export function ComplaintDrawer({
                 <SelectValue placeholder="Unassigned" />
               </SelectTrigger>
               <SelectContent>
-                {officers.map((o) => (
-                  <SelectItem key={o.id} value={o.id}>
-                    {o.name} — {o.region}
-                  </SelectItem>
-                ))}
+                <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                {officers
+                  .filter((o) => o.status !== "Inactive")
+                  .map((o) => (
+                    <SelectItem key={o.id} value={o.id}>
+                      {o.name} — {o.region}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

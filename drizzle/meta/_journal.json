@@ -15,6 +15,13 @@
       "when": 1782118118912,
       "tag": "0001_shallow_praxagora",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782155164469,
+      "tag": "0002_slimy_penance",
+      "breakpoints": true
     }
   ]
 }

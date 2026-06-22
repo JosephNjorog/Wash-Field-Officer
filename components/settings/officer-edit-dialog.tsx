@@ -30,7 +30,7 @@ const schema = z.object({
   region: z.string().min(2, "Region is required"),
   phone: z.string().min(6, "Phone is required"),
   email: z.string().email("Enter a valid email"),
-  status: z.enum(["Active", "Offline", "Overdue"]),
+  status: z.enum(["Active", "Offline", "Overdue", "Inactive"]),
   dailyTarget: z.number().int().min(1).max(20),
 });
 
@@ -137,6 +137,7 @@ export function OfficerEditDialog({
                     <SelectItem value="Active">Active</SelectItem>
                     <SelectItem value="Offline">Offline</SelectItem>
                     <SelectItem value="Overdue">Overdue</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
               )}

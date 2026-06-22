@@ -1,4 +1,4 @@
-export type OfficerStatus = "Active" | "Offline" | "Overdue";
+export type OfficerStatus = "Active" | "Offline" | "Overdue" | "Inactive";
 
 export interface Officer {
   id: string;
@@ -13,7 +13,7 @@ export interface Officer {
 }
 
 export type AssetType = "water_kiosk" | "borehole" | "pipeline" | "sanitation_block";
-export type AssetStatus = "functional" | "needs-repair" | "non-functional";
+export type AssetStatus = "functional" | "needs-repair" | "non-functional" | "decommissioned";
 
 export interface Asset {
   id: string;
@@ -25,7 +25,7 @@ export interface Asset {
   status: AssetStatus;
   lastInspected: string;
   conditionScore: number;
-  assignedOfficerId: string;
+  assignedOfficerId: string | null;
 }
 
 export type WaterFlowStatus = "Normal" | "Reduced" | "No Flow";

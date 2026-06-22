@@ -13,7 +13,12 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-export const officerStatusEnum = pgEnum("officer_status", ["Active", "Offline", "Overdue"]);
+export const officerStatusEnum = pgEnum("officer_status", [
+  "Active",
+  "Offline",
+  "Overdue",
+  "Inactive",
+]);
 export const assetTypeEnum = pgEnum("asset_type", [
   "water_kiosk",
   "borehole",
@@ -24,6 +29,7 @@ export const assetStatusEnum = pgEnum("asset_status", [
   "functional",
   "needs-repair",
   "non-functional",
+  "decommissioned",
 ]);
 export const waterFlowEnum = pgEnum("water_flow_status", ["Normal", "Reduced", "No Flow"]);
 export const infrastructureConditionEnum = pgEnum("infrastructure_condition", [
@@ -144,6 +150,12 @@ export const reports = pgTable("reports", {
   filters: jsonb("filters").notNull(),
   generatedBy: text("generated_by").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const officersRelations = relations(officers, ({ many }) => ({

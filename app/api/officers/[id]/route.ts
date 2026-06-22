@@ -10,7 +10,7 @@ const patchSchema = z.object({
   region: z.string().min(1).optional(),
   phone: z.string().min(1).optional(),
   email: z.string().email().optional(),
-  status: z.enum(["Active", "Offline", "Overdue"]).optional(),
+  status: z.enum(["Active", "Offline", "Overdue", "Inactive"]).optional(),
   dailyTarget: z.number().int().min(1).max(20).optional(),
 });
 

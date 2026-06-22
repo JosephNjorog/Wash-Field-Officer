@@ -33,7 +33,7 @@ export function serializeAsset(row: AssetRow): Asset {
     status: row.status,
     lastInspected: row.lastInspected.toISOString(),
     conditionScore: row.conditionScore,
-    assignedOfficerId: row.assignedOfficerId ?? "",
+    assignedOfficerId: row.assignedOfficerId,
   };
 }
 
