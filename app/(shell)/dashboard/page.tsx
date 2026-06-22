@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Users, ClipboardList, ClipboardCheck, AlertTriangle } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { MapSection } from "@/components/dashboard/map-section";
@@ -13,6 +14,7 @@ import { hoursSince } from "@/lib/utils";
 import type { ActivityEvent } from "@/lib/types";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const officers = useAppStore((s) => s.officers);
   const assets = useAppStore((s) => s.assets);
   const inspections = useAppStore((s) => s.inspections);
@@ -52,6 +54,14 @@ export default function DashboardPage() {
     [liveActivity, seedActivity]
   );
 
+  function handleActivitySelect(event: ActivityEvent) {
+    if (event.href) {
+      router.push(event.href);
+    } else {
+      setSelectedEvent(event);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -86,7 +96,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <ActivityFeed events={combinedActivity} onSelect={setSelectedEvent} />
+          <ActivityFeed events={combinedActivity} onSelect={handleActivitySelect} />
         </div>
         <div className="lg:col-span-3">
           <OfficerPerformanceTable officers={officers} dailySummaries={dailySummaries} />

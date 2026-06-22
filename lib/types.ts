@@ -109,6 +109,15 @@ export interface PendingSyncItem {
   status: SyncStatus;
 }
 
+export interface GeneratedReport {
+  id: string;
+  reportType: string;
+  format: "pdf" | "csv";
+  filters: Record<string, unknown>;
+  generatedBy: string;
+  createdAt: string;
+}
+
 export interface ActivityEvent {
   id: string;
   type: "inspection" | "complaint" | "issue" | "check-in";

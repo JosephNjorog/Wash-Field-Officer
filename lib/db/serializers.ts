@@ -1,11 +1,12 @@
 import type * as schema from "@/lib/db/schema";
-import type { Asset, Complaint, DailySummary, Inspection, Officer } from "@/lib/types";
+import type { Asset, Complaint, DailySummary, GeneratedReport, Inspection, Officer } from "@/lib/types";
 
 type OfficerRow = typeof schema.officers.$inferSelect;
 type AssetRow = typeof schema.assets.$inferSelect;
 type InspectionRow = typeof schema.inspections.$inferSelect;
 type ComplaintRow = typeof schema.complaints.$inferSelect;
 type DailySummaryRow = typeof schema.dailySummaries.$inferSelect;
+type ReportRow = typeof schema.reports.$inferSelect;
 
 export function serializeOfficer(row: OfficerRow): Officer {
   return {

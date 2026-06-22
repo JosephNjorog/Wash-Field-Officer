@@ -9,6 +9,7 @@ import {
   serial,
   pgEnum,
   uniqueIndex,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -134,6 +135,15 @@ export const checkIns = pgTable("check_ins", {
     .notNull()
     .references(() => assets.id),
   checkedInAt: timestamp("checked_in_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const reports = pgTable("reports", {
+  id: text("id").primaryKey(),
+  reportType: text("report_type").notNull(),
+  format: text("format").notNull(),
+  filters: jsonb("filters").notNull(),
+  generatedBy: text("generated_by").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const officersRelations = relations(officers, ({ many }) => ({
