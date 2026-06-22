@@ -156,8 +156,13 @@ export default function FieldPage() {
           </div>
         }
       >
-        {activeTab === "tasks" && <TasksTab />}
-        {activeTab === "report" && <ReportTab />}
+        {activeTab === "tasks" && <TasksTab onCheckedIn={handleCheckedIn} />}
+        {activeTab === "report" && (
+          <ReportTab
+            presetAssetId={reportPresetAssetId}
+            onPresetConsumed={() => setReportPresetAssetId(null)}
+          />
+        )}
         {activeTab === "complaints" && <ComplaintsTab />}
         {activeTab === "activity" && <ActivityTab />}
         {activeTab === "profile" && <ProfileTab />}
