@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Droplet, Waves, GitBranch, ShowerHead, MapPin, Check, List, Map as MapIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,11 +24,27 @@ const STATUS_STYLES: Record<FieldSiteTask["status"], string> = {
   Done: "bg-success/10 text-success border-success/30",
 };
 
-export function TasksTab() {
+export function TasksTab({ onCheckedIn }: { onCheckedIn?: (assetId: string) => void }) {
   const assets = useAppStore((s) => s.assets);
   const fieldTasks = useAppStore((s) => s.fieldTasks);
   const checkInSite = useAppStore((s) => s.checkInSite);
   const [view, setView] = useState<"list" | "map">("list");
+  const [checkingInId, setCheckingInId] = useState<string | null>(null);
+
+  async function handleCheckIn(assetId: string) {
+    setCheckingInId(assetId);
+    try {
+      await checkInSite(assetId);
+      toast.success("Checked in — let's submit your report");
+      onCheckedIn?.(assetId);
+    } catch (err) {
+      toast.error("Failed to check in", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setCheckingInId(null);
+    }
+  }
 
   const taskAssets: { asset: Asset; task: FieldSiteTask }[] = Object.values(fieldTasks)
     .map((task) => {
@@ -108,8 +125,14 @@ export function TasksTab() {
                     </span>
                   </div>
                   {task.status === "Pending" ? (
-                    <Button size="sm" className="w-full gap-1.5" onClick={() => checkInSite(asset.id)}>
-                      <MapPin className="size-3.5" /> Check In
+                    <Button
+                      size="sm"
+                      className="w-full gap-1.5"
+                      disabled={checkingInId === asset.id}
+                      onClick={() => handleCheckIn(asset.id)}
+                    >
+                      <MapPin className="size-3.5" />
+                      {checkingInId === asset.id ? "Checking in..." : "Check In"}
                     </Button>
                   ) : task.checkInAt ? (
                     <p className="flex items-center gap-1 text-xs text-success">

@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { KanbanCard } from "@/components/complaints/kanban-card";
+import { Button } from "@/components/ui/button";
 import type { Complaint, ComplaintStatus, Officer } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +13,8 @@ const COLUMN_ACCENT: Record<ComplaintStatus, string> = {
   "in-progress": "border-t-warning",
   resolved: "border-t-success",
 };
+
+const PAGE_SIZE = 10;
 
 export function KanbanColumn({
   status,
@@ -26,6 +30,10 @@ export function KanbanColumn({
   onCardClick: (complaint: Complaint) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  const visibleComplaints = complaints.slice(0, visibleCount);
+  const remaining = complaints.length - visibleComplaints.length;
 
   return (
     <div
@@ -43,7 +51,7 @@ export function KanbanColumn({
         </span>
       </div>
       <div className="flex-1 space-y-2 overflow-y-auto p-2.5">
-        {complaints.map((complaint) => (
+        {visibleComplaints.map((complaint) => (
           <KanbanCard
             key={complaint.id}
             complaint={complaint}
@@ -53,6 +61,16 @@ export function KanbanColumn({
         ))}
         {complaints.length === 0 && (
           <p className="px-2 py-6 text-center text-xs text-muted-foreground">No complaints</p>
+        )}
+        {remaining > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs text-muted-foreground"
+            onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+          >
+            Show {Math.min(remaining, PAGE_SIZE)} more
+          </Button>
         )}
       </div>
     </div>
