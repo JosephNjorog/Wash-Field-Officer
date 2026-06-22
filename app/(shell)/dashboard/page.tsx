@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Users, ClipboardList, ClipboardCheck, AlertTriangle } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { MapSection } from "@/components/dashboard/map-section";
@@ -30,6 +31,37 @@ export default function DashboardPage() {
     const id = setInterval(() => loadAll(), 25000);
     return () => clearInterval(id);
   }, [loadAll]);
+
+  const complaintSnapshot = useRef<Map<string, { status: string; assignedOfficerId: string | null }> | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (complaints.length === 0) return;
+
+    if (complaintSnapshot.current) {
+      const prev = complaintSnapshot.current;
+      complaints.forEach((c) => {
+        const before = prev.get(c.id);
+        if (!before) {
+          toast.info("New complaint logged", { description: `${c.category} at ${c.address}` });
+          return;
+        }
+        if (before.assignedOfficerId !== c.assignedOfficerId && c.assignedOfficerId) {
+          const officer = officers.find((o) => o.id === c.assignedOfficerId);
+          toast.info("Complaint assigned", {
+            description: `${c.id} assigned to ${officer?.name ?? "an officer"}`,
+          });
+        } else if (before.status !== c.status) {
+          toast.info("Complaint status updated", { description: `${c.id} is now ${c.status}` });
+        }
+      });
+    }
+
+    complaintSnapshot.current = new Map(
+      complaints.map((c) => [c.id, { status: c.status, assignedOfficerId: c.assignedOfficerId }])
+    );
+  }, [complaints, officers]);
 
   const activeOfficers = officers.filter((o) => o.status === "Active").length;
   const yesterdayActive = dailySummaries.filter(
