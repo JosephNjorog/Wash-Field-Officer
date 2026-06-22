@@ -34,6 +34,12 @@ export default function FieldPage() {
 
   const knownComplaintIds = useRef<Set<string> | null>(null);
   const knownAssetIds = useRef<Set<string> | null>(null);
+  const [reportPresetAssetId, setReportPresetAssetId] = useState<string | null>(null);
+
+  function handleCheckedIn(assetId: string) {
+    setReportPresetAssetId(assetId);
+    setActiveTab("report");
+  }
 
   useEffect(() => {
     if (!hydrated) return;
