@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Users, ClipboardList, ClipboardCheck, AlertTriangle } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { MapSection } from "@/components/dashboard/map-section";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { ActivityDetailDialog } from "@/components/dashboard/activity-detail-dialog";
 import { OfficerPerformanceTable } from "@/components/dashboard/officer-performance-table";
 import { useAppStore } from "@/lib/store";
 import { buildSeedActivity, TODAY_STR } from "@/lib/selectors";
 import { hoursSince } from "@/lib/utils";
+import type { ActivityEvent } from "@/lib/types";
 
 export default function DashboardPage() {
   const officers = useAppStore((s) => s.officers);
@@ -18,6 +20,7 @@ export default function DashboardPage() {
   const dailySummaries = useAppStore((s) => s.dailySummaries);
   const liveActivity = useAppStore((s) => s.activity);
   const loadAll = useAppStore((s) => s.loadAll);
+  const [selectedEvent, setSelectedEvent] = useState<ActivityEvent | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => loadAll(), 25000);
@@ -83,12 +86,14 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <ActivityFeed events={combinedActivity} />
+          <ActivityFeed events={combinedActivity} onSelect={setSelectedEvent} />
         </div>
         <div className="lg:col-span-3">
           <OfficerPerformanceTable officers={officers} dailySummaries={dailySummaries} />
         </div>
       </div>
+
+      <ActivityDetailDialog event={selectedEvent} onClose={() => setSelectedEvent(null)} />
     </div>
   );
 }

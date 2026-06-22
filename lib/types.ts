@@ -115,4 +115,5 @@ export interface ActivityEvent {
   text: string;
   officerName: string;
   time: string;
+  href?: string;
 }

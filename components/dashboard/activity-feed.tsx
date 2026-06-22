@@ -17,20 +17,30 @@ const ICON_COLORS: Record<ActivityEvent["type"], string> = {
   "check-in": "text-success bg-success/10",
 };
 
-export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
+export function ActivityFeed({
+  events,
+  onSelect,
+}: {
+  events: ActivityEvent[];
+  onSelect?: (event: ActivityEvent) => void;
+}) {
   return (
     <Card className="h-full">
       <CardHeader>
         <CardTitle className="text-base">Recent Activity Feed</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-1">
         {events.length === 0 && (
           <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
         )}
         {events.slice(0, 10).map((event) => {
           const Icon = ICONS[event.type];
           return (
-            <div key={event.id} className="flex gap-3">
+            <button
+              key={event.id}
+              onClick={() => onSelect?.(event)}
+              className="-mx-2 flex w-[calc(100%+1rem)] gap-3 rounded-md px-2 py-2.5 text-left hover:bg-muted"
+            >
               <div
                 className={cn(
                   "flex size-8 shrink-0 items-center justify-center rounded-full",
@@ -45,7 +55,7 @@ export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
                   {event.officerName} · {timeSince(event.time)}
                 </p>
               </div>
-            </div>
+            </button>
           );
         })}
       </CardContent>

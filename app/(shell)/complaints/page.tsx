@@ -60,14 +60,20 @@ export default function ComplaintsPage() {
     (c) => c.status === "resolved" && c.resolvedAt && hoursSince(c.resolvedAt) <= 24 * 7
   ).length;
 
-  function handleDragEnd(event: DragEndEvent) {
+  async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
     const newStatus = over.id as ComplaintStatus;
     const complaint = complaints.find((c) => c.id === active.id);
     if (!complaint || complaint.status === newStatus) return;
-    updateComplaintStatus(complaint.id, newStatus);
-    toast.success(`${complaint.id} moved to ${COMPLAINT_STATUS_LABELS[newStatus]}`);
+    try {
+      await updateComplaintStatus(complaint.id, newStatus);
+      toast.success(`${complaint.id} moved to ${COMPLAINT_STATUS_LABELS[newStatus]}`);
+    } catch (err) {
+      toast.error("Failed to update complaint status", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    }
   }
 
   return (

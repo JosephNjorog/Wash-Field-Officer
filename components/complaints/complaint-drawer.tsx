@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { ComplaintStatusBadge } from "@/components/shared/status-badge";
 import { useAppStore } from "@/lib/store";
 import type { Complaint } from "@/lib/types";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime, timeSince } from "@/lib/utils";
 
 export function ComplaintDrawer({
   complaint,
@@ -34,6 +34,11 @@ export function ComplaintDrawer({
   const assignComplaint = useAppStore((s) => s.assignComplaint);
   const updateComplaintStatus = useAppStore((s) => s.updateComplaintStatus);
   const [note, setNote] = useState(complaint?.resolutionNote ?? "");
+  const [saving, setSaving] = useState<"assign" | "in-progress" | "resolved" | null>(null);
+
+  useEffect(() => {
+    setNote(complaint?.resolutionNote ?? "");
+  }, [complaint?.id, complaint?.resolutionNote]);
 
   if (!complaint) return null;
 
@@ -47,6 +52,35 @@ export function ComplaintDrawer({
       : []),
     ...(complaint.resolvedAt ? [{ label: "Resolved", time: complaint.resolvedAt }] : []),
   ];
+
+  async function handleAssign(officerId: string) {
+    setSaving("assign");
+    try {
+      await assignComplaint(complaint!.id, officerId);
+      toast.success("Complaint reassigned");
+    } catch (err) {
+      toast.error("Failed to reassign complaint", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  async function handleStatusChange(status: "in-progress" | "resolved") {
+    setSaving(status);
+    try {
+      await updateComplaintStatus(complaint!.id, status, note);
+      toast.success(status === "resolved" ? "Complaint resolved" : "Status updated to In Progress");
+      if (status === "resolved") onClose();
+    } catch (err) {
+      toast.error("Failed to update complaint", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setSaving(null);
+    }
+  }
 
   return (
     <Sheet open={!!complaint} onOpenChange={(open) => !open && onClose()}>
@@ -62,17 +96,29 @@ export function ComplaintDrawer({
           <div>
             <p className="text-sm font-medium text-foreground">{complaint.category}</p>
             <p className="mt-1 text-sm text-muted-foreground">{complaint.description}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{complaint.address}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {complaint.address} · {complaint.region}
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-3 text-xs text-muted-foreground">
+              <div>
+                <p className="font-semibold uppercase">Logged</p>
+                <p>
+                  {formatDateTime(complaint.createdAt)} ({timeSince(complaint.createdAt)})
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold uppercase">Resolved</p>
+                <p>{complaint.resolvedAt ? formatDateTime(complaint.resolvedAt) : "—"}</p>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-1.5">
             <Label className="text-xs">Assigned Officer</Label>
             <Select
               value={complaint.assignedOfficerId ?? ""}
-              onValueChange={(v) => {
-                assignComplaint(complaint.id, v);
-                toast.success("Complaint reassigned");
-              }}
+              onValueChange={handleAssign}
+              disabled={saving === "assign"}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Unassigned" />
@@ -114,22 +160,17 @@ export function ComplaintDrawer({
             <Button
               variant="outline"
               className="flex-1"
-              onClick={() => {
-                updateComplaintStatus(complaint.id, "in-progress", note);
-                toast.success("Status updated to In Progress");
-              }}
+              disabled={saving === "in-progress"}
+              onClick={() => handleStatusChange("in-progress")}
             >
-              Mark In Progress
+              {saving === "in-progress" ? "Saving..." : "Mark In Progress"}
             </Button>
             <Button
               className="flex-1"
-              onClick={() => {
-                updateComplaintStatus(complaint.id, "resolved", note);
-                toast.success("Complaint resolved");
-                onClose();
-              }}
+              disabled={saving === "resolved"}
+              onClick={() => handleStatusChange("resolved")}
             >
-              Mark Resolved
+              {saving === "resolved" ? "Saving..." : "Mark Resolved"}
             </Button>
           </div>
         </div>

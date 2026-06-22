@@ -38,6 +38,7 @@ export function buildSeedActivity(
         : `Submitted inspection report for ${asset?.name ?? "asset"}`,
       officerName: officer?.name ?? "Unknown Officer",
       time: insp.formData.submitted_at,
+      href: asset ? `/assets?asset=${asset.id}` : undefined,
     };
   });
 
@@ -49,6 +50,7 @@ export function buildSeedActivity(
       text: `Logged complaint: ${c.category} at ${c.address}`,
       officerName: officer?.name ?? "Unassigned",
       time: c.createdAt,
+      href: `/complaints?complaint=${c.id}`,
     };
   });
 
