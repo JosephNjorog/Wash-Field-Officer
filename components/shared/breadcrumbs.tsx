@@ -6,6 +6,7 @@ import { ChevronRight, Home } from "lucide-react";
 
 const LABELS: Record<string, string> = {
   dashboard: "Dashboard",
+  officers: "Officers",
   assets: "Assets",
   complaints: "Complaints",
   reports: "Reports",

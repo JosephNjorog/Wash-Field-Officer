@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Droplets,
   LayoutDashboard,
+  Users,
   MapPinned,
   ClipboardList,
   FileBarChart2,
@@ -24,6 +25,7 @@ import {
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/officers", label: "Officers", icon: Users },
   { href: "/assets", label: "Assets", icon: MapPinned },
   { href: "/complaints", label: "Complaints", icon: ClipboardList },
   { href: "/reports", label: "Reports", icon: FileBarChart2 },

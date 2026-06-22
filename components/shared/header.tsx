@@ -20,6 +20,7 @@ import { NotificationBell } from "@/components/shared/notification-bell";
 
 const TITLES: Record<string, string> = {
   "/dashboard": "Management Dashboard",
+  "/officers": "Field Officer Management",
   "/assets": "Infrastructure Asset Registry",
   "/complaints": "Complaint Management Queue",
   "/reports": "Report Builder",

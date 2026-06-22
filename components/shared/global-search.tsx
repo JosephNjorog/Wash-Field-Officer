@@ -37,7 +37,7 @@ export function GlobalSearch() {
         type: "officer",
         title: o.name,
         subtitle: `Officer · ${o.region}`,
-        href: `/settings?officer=${o.id}`,
+        href: `/officers?officer=${o.id}`,
       }));
 
     const assetMatches: ResultItem[] = assets

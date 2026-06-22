@@ -6,6 +6,7 @@ export const NAME_COOKIE = "fw_name";
 
 export const MANAGEMENT_PATHS = [
   "/dashboard",
+  "/officers",
   "/assets",
   "/complaints",
   "/reports",
