@@ -1,0 +1,99 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { Bell, Search, ChevronDown, WifiOff } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CURRENT_SUPERVISOR, useAppStore } from "@/lib/store";
+
+const TITLES: Record<string, string> = {
+  "/dashboard": "Management Dashboard",
+  "/assets": "Infrastructure Asset Registry",
+  "/complaints": "Complaint Management Queue",
+  "/reports": "Report Builder",
+  "/settings": "Settings",
+};
+
+export function Header() {
+  const pathname = usePathname();
+  const offlineMode = useAppStore((s) => s.offlineMode);
+  const toggleOfflineMode = useAppStore((s) => s.toggleOfflineMode);
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  const title =
+    Object.entries(TITLES).find(([prefix]) => pathname.startsWith(prefix))?.[1] ??
+    "FieldWatch";
+
+  return (
+    <header className="flex h-16 items-center justify-between gap-4 border-b border-border bg-white px-6">
+      <div className="min-w-0">
+        <h1 className="truncate text-lg font-semibold text-foreground">{title}</h1>
+        {now && (
+          <p className="text-xs text-muted-foreground">
+            {now.toLocaleDateString("en-KE", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+            {" · "}
+            {now.toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}
+          </p>
+        )}
+      </div>
+
+      <div className="hidden max-w-md flex-1 items-center md:flex">
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Search officers, assets, complaints..." className="pl-9" />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="hidden items-center gap-2 lg:flex">
+          {offlineMode && <WifiOff className="size-4 text-destructive" />}
+          <span className="text-xs font-medium text-muted-foreground">Simulate Offline</span>
+          <Switch checked={offlineMode} onCheckedChange={toggleOfflineMode} />
+        </div>
+
+        <button className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted">
+          <Bell className="size-5" />
+          <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+            3
+          </span>
+        </button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted">
+            <div className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+              {CURRENT_SUPERVISOR.initials}
+            </div>
+            <div className="hidden text-left sm:block">
+              <p className="text-sm font-medium leading-tight">{CURRENT_SUPERVISOR.name}</p>
+              <p className="text-xs text-muted-foreground">{CURRENT_SUPERVISOR.role}</p>
+            </div>
+            <ChevronDown className="size-4 text-muted-foreground" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>Profile</DropdownMenuItem>
+            <DropdownMenuItem>Account Settings</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>Sign out</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </header>
+  );
+}
