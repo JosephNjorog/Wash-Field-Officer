@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Search, ChevronDown, WifiOff } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { ChevronDown, WifiOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
@@ -16,6 +15,8 @@ import {
 import { useAppStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/auth-store";
 import { initials } from "@/lib/utils";
+import { GlobalSearch } from "@/components/shared/global-search";
+import { NotificationBell } from "@/components/shared/notification-bell";
 
 const TITLES: Record<string, string> = {
   "/dashboard": "Management Dashboard",
@@ -60,10 +61,7 @@ export function Header() {
       </div>
 
       <div className="hidden max-w-md flex-1 items-center md:flex">
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search officers, assets, complaints..." className="pl-9" />
-        </div>
+        <GlobalSearch />
       </div>
 
       <div className="flex items-center gap-4">
@@ -73,12 +71,7 @@ export function Header() {
           <Switch checked={offlineMode} onCheckedChange={toggleOfflineMode} />
         </div>
 
-        <button className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted">
-          <Bell className="size-5" />
-          <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
-            3
-          </span>
-        </button>
+        <NotificationBell />
 
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted">

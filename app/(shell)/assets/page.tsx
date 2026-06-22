@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -31,8 +32,14 @@ export default function AssetsPage() {
   const assets = useAppStore((s) => s.assets);
   const officers = useAppStore((s) => s.officers);
   const inspections = useAppStore((s) => s.inspections);
+  const searchParams = useSearchParams();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const assetParam = searchParams.get("asset");
+    if (assetParam) setSelectedId(assetParam);
+  }, [searchParams]);
   const [filters, setFilters] = useState<AssetFilterState>({
     type: "all",
     status: "all",

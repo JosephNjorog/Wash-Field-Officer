@@ -6,6 +6,7 @@ import type {
   Inspection,
   InspectionFormData,
   Officer,
+  OfficerStatus,
 } from "@/lib/types";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -62,4 +63,20 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(patch),
     }).then((r) => r.complaint),
+
+  updateOfficer: (
+    officerId: string,
+    patch: {
+      name?: string;
+      region?: string;
+      phone?: string;
+      email?: string;
+      status?: OfficerStatus;
+      dailyTarget?: number;
+    }
+  ) =>
+    request<{ officer: Officer }>(`/api/officers/${officerId}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }).then((r) => r.officer),
 };

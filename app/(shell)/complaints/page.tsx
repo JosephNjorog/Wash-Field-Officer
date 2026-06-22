@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { ComplaintStats } from "@/components/complaints/complaint-stats";
@@ -17,6 +18,7 @@ export default function ComplaintsPage() {
   const complaints = useAppStore((s) => s.complaints);
   const officers = useAppStore((s) => s.officers);
   const updateComplaintStatus = useAppStore((s) => s.updateComplaintStatus);
+  const searchParams = useSearchParams();
 
   const [activeComplaint, setActiveComplaint] = useState<Complaint | null>(null);
   const [filters, setFilters] = useState<ComplaintFilterState>({
@@ -25,6 +27,14 @@ export default function ComplaintsPage() {
     region: "all",
     from: "",
   });
+
+  useEffect(() => {
+    const complaintParam = searchParams.get("complaint");
+    if (complaintParam) {
+      const match = complaints.find((c) => c.id === complaintParam);
+      if (match) setActiveComplaint(match);
+    }
+  }, [searchParams, complaints]);
 
   const regions = useMemo(
     () => Array.from(new Set(complaints.map((c) => c.region))).sort(),
