@@ -130,19 +130,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (get().loading) return;
     set({ loading: true, loadError: null });
     try {
-      const [officers, assets, inspections, complaints, dailySummaries] = await Promise.all([
-        api.getOfficers(),
-        api.getAssets(),
-        api.getInspections(),
-        api.getComplaints(),
-        api.getDailySummaries(),
-      ]);
+      const [officers, assets, inspections, complaints, dailySummaries, reports] =
+        await Promise.all([
+          api.getOfficers(),
+          api.getAssets(),
+          api.getInspections(),
+          api.getComplaints(),
+          api.getDailySummaries(),
+          api.getReports(),
+        ]);
       set((state) => ({
         officers,
         assets,
         inspections,
         complaints,
         dailySummaries,
+        reports,
         loading: false,
         loaded: true,
         fieldTasks:
