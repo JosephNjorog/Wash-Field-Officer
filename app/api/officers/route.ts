@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
-import { getOfficers } from "@/lib/server-data";
+import { db } from "@/lib/db";
+import { officers } from "@/lib/db/schema";
+import { serializeOfficer } from "@/lib/db/serializers";
 
 export async function GET() {
-  return NextResponse.json({ officers: getOfficers() });
+  const rows = await db.select().from(officers);
+  return NextResponse.json({ officers: rows.map(serializeOfficer) });
 }

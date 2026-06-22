@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
-import { getDailySummaries } from "@/lib/server-data";
+import { db } from "@/lib/db";
+import { dailySummaries } from "@/lib/db/schema";
+import { serializeDailySummary } from "@/lib/db/serializers";
 
 export async function GET() {
-  return NextResponse.json({ daily_summaries: getDailySummaries() });
+  const rows = await db.select().from(dailySummaries);
+  return NextResponse.json({ daily_summaries: rows.map(serializeDailySummary) });
 }
