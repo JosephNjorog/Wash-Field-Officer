@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
@@ -13,6 +13,25 @@ export const metadata: Metadata = {
   title: "FieldWatch | WASH Field Officer Monitoring",
   description:
     "WASH Field Officer Monitoring and Service Delivery Management System",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "FieldWatch",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#1A3C6E",
 };
 
 export default function RootLayout({
