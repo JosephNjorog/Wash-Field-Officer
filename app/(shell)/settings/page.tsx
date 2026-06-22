@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { UserPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -16,18 +18,38 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { OfficerStatusBadge } from "@/components/shared/status-badge";
+import { OfficerEditDialog } from "@/components/settings/officer-edit-dialog";
+import { OfficerAddDialog } from "@/components/settings/officer-add-dialog";
+import { OfficerDetailSheet } from "@/components/settings/officer-detail-sheet";
 import { useAppStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/auth-store";
 import { initials } from "@/lib/utils";
+import type { Officer } from "@/lib/types";
 
 export default function SettingsPage() {
   const officers = useAppStore((s) => s.officers);
   const session = useAuthStore((s) => s.session);
+  const searchParams = useSearchParams();
   const name = session?.name || "Supervisor";
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [smsAlerts, setSmsAlerts] = useState(true);
   const [autoSync, setAutoSync] = useState(true);
   const [dailyTarget, setDailyTarget] = useState(6);
+
+  const [detailOfficer, setDetailOfficer] = useState<Officer | null>(null);
+  const [editOfficer, setEditOfficer] = useState<Officer | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+
+  useEffect(() => {
+    const officerParam = searchParams.get("officer");
+    if (officerParam) {
+      const match = officers.find((o) => o.id === officerParam);
+      if (match) setDetailOfficer(match);
+    }
+  }, [searchParams, officers]);
+
+  const activeCount = officers.filter((o) => o.status === "Active").length;
+  const overdueCount = officers.filter((o) => o.status === "Overdue").length;
 
   return (
     <div className="space-y-6">
@@ -58,8 +80,16 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Officer Roster</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle className="text-base">Field Officer Management</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {officers.length} officers · {activeCount} active · {overdueCount} overdue
+            </p>
+          </div>
+          <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
+            <UserPlus className="size-4" /> Add Officer
+          </Button>
         </CardHeader>
         <CardContent>
           <Table>
@@ -75,7 +105,11 @@ export default function SettingsPage() {
             </TableHeader>
             <TableBody>
               {officers.map((officer) => (
-                <TableRow key={officer.id}>
+                <TableRow
+                  key={officer.id}
+                  className="cursor-pointer"
+                  onClick={() => setDetailOfficer(officer)}
+                >
                   <TableCell className="font-medium">{officer.name}</TableCell>
                   <TableCell className="text-sm">{officer.region}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{officer.phone}</TableCell>
@@ -87,7 +121,10 @@ export default function SettingsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => toast.success(`Editing ${officer.name}`)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditOfficer(officer);
+                      }}
                     >
                       Edit
                     </Button>
@@ -148,6 +185,20 @@ export default function SettingsPage() {
           <Button onClick={() => toast.success("Preferences saved")}>Save Preferences</Button>
         </CardContent>
       </Card>
+
+      <OfficerDetailSheet
+        officer={detailOfficer}
+        onClose={() => setDetailOfficer(null)}
+        onEdit={() => {
+          if (detailOfficer) setEditOfficer(detailOfficer);
+        }}
+      />
+      <OfficerEditDialog
+        officer={editOfficer}
+        open={!!editOfficer}
+        onOpenChange={(open) => !open && setEditOfficer(null)}
+      />
+      <OfficerAddDialog open={addOpen} onOpenChange={setAddOpen} />
     </div>
   );
 }
