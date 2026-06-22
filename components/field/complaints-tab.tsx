@@ -7,17 +7,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ComplaintStatusBadge } from "@/components/shared/status-badge";
-import { useAppStore, CURRENT_FIELD_OFFICER_ID } from "@/lib/store";
+import { useAppStore } from "@/lib/store";
 import { cn, timeSince } from "@/lib/utils";
 
 export function ComplaintsTab() {
   const complaints = useAppStore((s) => s.complaints);
   const updateComplaintStatus = useAppStore((s) => s.updateComplaintStatus);
+  const currentFieldOfficerId = useAppStore((s) => s.currentFieldOfficerId);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [note, setNote] = useState("");
 
   const myComplaints = complaints
-    .filter((c) => c.assignedOfficerId === CURRENT_FIELD_OFFICER_ID)
+    .filter((c) => c.assignedOfficerId === currentFieldOfficerId)
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 
   return (

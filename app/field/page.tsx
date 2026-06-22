@@ -1,22 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, WifiOff, Wifi, CloudUpload } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LayoutDashboard, WifiOff, Wifi, CloudUpload, LogOut } from "lucide-react";
 import { MobileFrame, type FieldTab } from "@/components/field/mobile-frame";
 import { TasksTab } from "@/components/field/tasks-tab";
 import { ReportTab } from "@/components/field/report-tab";
 import { ComplaintsTab } from "@/components/field/complaints-tab";
 import { ActivityTab } from "@/components/field/activity-tab";
 import { Switch } from "@/components/ui/switch";
-import {
-  useAppStore,
-  CURRENT_FIELD_OFFICER_ID,
-} from "@/lib/store";
+import { useAppStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/auth-store";
 import { todaySummaryFor } from "@/lib/selectors";
 
 export default function FieldPage() {
   const [activeTab, setActiveTab] = useState<FieldTab>("tasks");
+  const router = useRouter();
 
   const officers = useAppStore((s) => s.officers);
   const dailySummaries = useAppStore((s) => s.dailySummaries);
@@ -25,8 +25,29 @@ export default function FieldPage() {
   const offlineMode = useAppStore((s) => s.offlineMode);
   const toggleOfflineMode = useAppStore((s) => s.toggleOfflineMode);
   const pendingSync = useAppStore((s) => s.pendingSync);
+  const currentFieldOfficerId = useAppStore((s) => s.currentFieldOfficerId);
+  const setCurrentFieldOfficer = useAppStore((s) => s.setCurrentFieldOfficer);
 
-  const officer = officers.find((o) => o.id === CURRENT_FIELD_OFFICER_ID)!;
+  const session = useAuthStore((s) => s.session);
+  const hydrated = useAuthStore((s) => s.hydrated);
+  const logout = useAuthStore((s) => s.logout);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (!session) {
+      router.replace("/");
+      return;
+    }
+    const officerId = session.role === "officer" ? session.officerId : officers[0]?.id;
+    if (officerId) setCurrentFieldOfficer(officerId);
+  }, [hydrated, session, officers, setCurrentFieldOfficer, router]);
+
+  const officer = officers.find((o) => o.id === currentFieldOfficerId);
+
+  if (!hydrated || !session || !officer) {
+    return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Loading field view...</div>;
+  }
+
   const summary = todaySummaryFor(officer.id, dailySummaries);
 
   const sitesVisited = Object.values(fieldTasks).filter((t) => t.status !== "Pending").length;
@@ -46,12 +67,24 @@ export default function FieldPage() {
 
   return (
     <div className="relative">
-      <Link
-        href="/dashboard"
-        className="fixed left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-secondary shadow-md hover:bg-brand-tint"
-      >
-        <LayoutDashboard className="size-3.5" /> Dashboard View
-      </Link>
+      {session.role === "supervisor" ? (
+        <Link
+          href="/dashboard"
+          className="fixed left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-secondary shadow-md hover:bg-brand-tint"
+        >
+          <LayoutDashboard className="size-3.5" /> Dashboard View
+        </Link>
+      ) : (
+        <button
+          onClick={() => {
+            logout();
+            router.push("/");
+          }}
+          className="fixed left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-destructive shadow-md hover:bg-destructive/10"
+        >
+          <LogOut className="size-3.5" /> Sign Out
+        </button>
+      )}
 
       <div className="fixed right-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-medium shadow-md">
         {offlineMode ? (

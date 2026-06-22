@@ -2,15 +2,16 @@
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAppStore, CURRENT_FIELD_OFFICER_ID } from "@/lib/store";
+import { useAppStore } from "@/lib/store";
 import { formatDateTime } from "@/lib/utils";
 
 export function ActivityTab() {
   const dailySummaries = useAppStore((s) => s.dailySummaries);
   const pendingSync = useAppStore((s) => s.pendingSync);
+  const currentFieldOfficerId = useAppStore((s) => s.currentFieldOfficerId);
 
   const mine = dailySummaries
-    .filter((d) => d.officerId === CURRENT_FIELD_OFFICER_ID)
+    .filter((d) => d.officerId === currentFieldOfficerId)
     .sort((a, b) => (a.date < b.date ? -1 : 1));
 
   const totals = mine.reduce(

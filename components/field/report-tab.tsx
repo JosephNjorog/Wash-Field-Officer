@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useAppStore, CURRENT_FIELD_OFFICER_ID } from "@/lib/store";
+import { useAppStore } from "@/lib/store";
 
 const schema = z.object({
   assetId: z.string().min(1, "Select a site"),
@@ -36,12 +36,13 @@ export function ReportTab() {
   const assets = useAppStore((s) => s.assets);
   const submitInspection = useAppStore((s) => s.submitInspection);
   const pendingSync = useAppStore((s) => s.pendingSync);
+  const currentFieldOfficerId = useAppStore((s) => s.currentFieldOfficerId);
 
   const [photoCount, setPhotoCount] = useState(0);
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [capturing, setCapturing] = useState(false);
 
-  const mySites = assets.filter((a) => a.assignedOfficerId === CURRENT_FIELD_OFFICER_ID);
+  const mySites = assets.filter((a) => a.assignedOfficerId === currentFieldOfficerId);
 
   const {
     register,
