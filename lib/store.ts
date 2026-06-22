@@ -310,6 +310,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({ complaints: [created, ...state.complaints] }));
   },
 
+  logReport: async (input) => {
+    const created = await api.createReport(input);
+    set((state) => ({ reports: [created, ...state.reports] }));
+  },
+
   flushPendingSync: () =>
     set((state) => ({
       pendingSync: state.pendingSync.map((item) => ({ ...item, status: "synced" })),
