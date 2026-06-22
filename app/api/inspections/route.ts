@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { addInspection, getInspections, getAssets, getOfficers } from "@/lib/server-data";
+import { db } from "@/lib/db";
+import { assets, inspections, officers } from "@/lib/db/schema";
+import { serializeInspection } from "@/lib/db/serializers";
 
 const createInspectionSchema = z.object({
   officerId: z.string().min(1),
@@ -18,11 +21,18 @@ export async function GET(request: NextRequest) {
   const officerId = request.nextUrl.searchParams.get("officerId");
   const assetId = request.nextUrl.searchParams.get("assetId");
 
-  let inspections = getInspections();
-  if (officerId) inspections = inspections.filter((i) => i.officerId === officerId);
-  if (assetId) inspections = inspections.filter((i) => i.assetId === assetId);
+  const conditions = [
+    officerId ? eq(inspections.officerId, officerId) : undefined,
+    assetId ? eq(inspections.assetId, assetId) : undefined,
+  ].filter((c): c is NonNullable<typeof c> => !!c);
 
-  return NextResponse.json({ inspections });
+  const rows = await db
+    .select()
+    .from(inspections)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(inspections.submittedAt));
+
+  return NextResponse.json({ inspections: rows.map(serializeInspection) });
 }
 
 export async function POST(request: NextRequest) {
@@ -32,29 +42,35 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const officer = getOfficers().find((o) => o.id === parsed.data.officerId);
-  const asset = getAssets().find((a) => a.id === parsed.data.assetId);
+  const [officer] = await db
+    .select()
+    .from(officers)
+    .where(eq(officers.id, parsed.data.officerId));
+  const [asset] = await db.select().from(assets).where(eq(assets.id, parsed.data.assetId));
   if (!officer || !asset) {
     return NextResponse.json({ error: "Unknown officerId or assetId" }, { status: 404 });
   }
 
-  const now = new Date().toISOString();
-  const inspection = addInspection({
-    id: `INS-${Date.now()}`,
-    officerId: parsed.data.officerId,
-    assetId: parsed.data.assetId,
-    formData: {
-      water_flow_status: parsed.data.water_flow_status,
-      infrastructure_condition: parsed.data.infrastructure_condition,
-      chlorine_level: parsed.data.chlorine_level,
+  const now = new Date();
+  const [row] = await db
+    .insert(inspections)
+    .values({
+      id: `INS-${Date.now()}`,
+      officerId: parsed.data.officerId,
+      assetId: parsed.data.assetId,
+      waterFlowStatus: parsed.data.water_flow_status,
+      infrastructureCondition: parsed.data.infrastructure_condition,
+      chlorineLevel: parsed.data.chlorine_level.toString(),
       notes: parsed.data.notes,
-      photo_count: parsed.data.photo_count,
-      gps_lat: parsed.data.gps_lat,
-      gps_lng: parsed.data.gps_lng,
-      submitted_at: now,
-      synced_at: now,
-    },
-  });
+      photoCount: parsed.data.photo_count,
+      gpsLat: parsed.data.gps_lat,
+      gpsLng: parsed.data.gps_lng,
+      submittedAt: now,
+      syncedAt: now,
+    })
+    .returning();
 
-  return NextResponse.json({ inspection }, { status: 201 });
+  await db.update(assets).set({ lastInspected: now }).where(eq(assets.id, parsed.data.assetId));
+
+  return NextResponse.json({ inspection: serializeInspection(row) }, { status: 201 });
 }

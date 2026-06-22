@@ -1,13 +1,24 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getComplaints } from "@/lib/server-data";
+import { and, desc, eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { complaints } from "@/lib/db/schema";
+import { serializeComplaint } from "@/lib/db/serializers";
+import type { ComplaintStatus } from "@/lib/types";
 
 export async function GET(request: NextRequest) {
-  const status = request.nextUrl.searchParams.get("status");
+  const status = request.nextUrl.searchParams.get("status") as ComplaintStatus | null;
   const officerId = request.nextUrl.searchParams.get("officerId");
 
-  let complaints = getComplaints();
-  if (status) complaints = complaints.filter((c) => c.status === status);
-  if (officerId) complaints = complaints.filter((c) => c.assignedOfficerId === officerId);
+  const conditions = [
+    status ? eq(complaints.status, status) : undefined,
+    officerId ? eq(complaints.assignedOfficerId, officerId) : undefined,
+  ].filter((c): c is NonNullable<typeof c> => !!c);
 
-  return NextResponse.json({ complaints });
+  const rows = await db
+    .select()
+    .from(complaints)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(complaints.createdAt));
+
+  return NextResponse.json({ complaints: rows.map(serializeComplaint) });
 }

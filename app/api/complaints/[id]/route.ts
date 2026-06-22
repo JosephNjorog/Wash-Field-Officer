@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { updateComplaint } from "@/lib/server-data";
+import { db } from "@/lib/db";
+import { complaints } from "@/lib/db/schema";
+import { serializeComplaint } from "@/lib/db/serializers";
 
 const patchSchema = z.object({
   status: z.enum(["open", "assigned", "in-progress", "resolved"]).optional(),
@@ -15,10 +18,27 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const complaint = updateComplaint(params.id, parsed.data);
-  if (!complaint) {
+  const patch: Partial<typeof complaints.$inferInsert> = {};
+  if (parsed.data.status) {
+    patch.status = parsed.data.status;
+    if (parsed.data.status === "resolved") patch.resolvedAt = new Date();
+  }
+  if (parsed.data.assignedOfficerId !== undefined) {
+    patch.assignedOfficerId = parsed.data.assignedOfficerId;
+  }
+  if (parsed.data.resolutionNote !== undefined) {
+    patch.resolutionNote = parsed.data.resolutionNote;
+  }
+
+  const [row] = await db
+    .update(complaints)
+    .set(patch)
+    .where(eq(complaints.id, params.id))
+    .returning();
+
+  if (!row) {
     return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ complaint });
+  return NextResponse.json({ complaint: serializeComplaint(row) });
 }
