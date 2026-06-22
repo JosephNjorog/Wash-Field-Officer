@@ -3,6 +3,7 @@ import type {
   Complaint,
   ComplaintStatus,
   DailySummary,
+  GeneratedReport,
   Inspection,
   InspectionFormData,
   Officer,
@@ -32,6 +33,18 @@ export const api = {
     request<{ daily_summaries: DailySummary[] }>("/api/daily-summaries").then(
       (r) => r.daily_summaries
     ),
+  getReports: () => request<{ reports: GeneratedReport[] }>("/api/reports").then((r) => r.reports),
+
+  createReport: (input: {
+    reportType: string;
+    format: "pdf" | "csv";
+    filters: Record<string, unknown>;
+    generatedBy: string;
+  }) =>
+    request<{ report: GeneratedReport }>("/api/reports", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }).then((r) => r.report),
 
   checkIn: (officerId: string, assetId: string) =>
     request<{ checkedInAt: string; officer: string; asset: string }>("/api/check-in", {

@@ -9,6 +9,7 @@ import type {
   ComplaintStatus,
   DailySummary,
   FieldSiteTask,
+  GeneratedReport,
   Inspection,
   InspectionFormData,
   Officer,
@@ -30,6 +31,7 @@ interface AppState {
   inspections: Inspection[];
   complaints: Complaint[];
   dailySummaries: DailySummary[];
+  reports: GeneratedReport[];
   activity: ActivityEvent[];
   pendingSync: PendingSyncItem[];
   offlineMode: boolean;
@@ -91,6 +93,12 @@ interface AppState {
     assignedOfficerId?: string | null;
     assetId?: string;
   }) => Promise<void>;
+  logReport: (input: {
+    reportType: string;
+    format: "pdf" | "csv";
+    filters: Record<string, unknown>;
+    generatedBy: string;
+  }) => Promise<void>;
   flushPendingSync: () => void;
 }
 
@@ -108,6 +116,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   inspections: [],
   complaints: [],
   dailySummaries: [],
+  reports: [],
   activity: [],
   pendingSync: [],
   offlineMode: false,
