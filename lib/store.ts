@@ -15,7 +15,21 @@ import type {
   InspectionFormData,
   Officer,
   PendingSyncItem,
+  SupervisorProfile,
+  SystemPreferences,
 } from "@/lib/types";
+
+const DEFAULT_SUPERVISOR_PROFILE: SupervisorProfile = {
+  name: "James Kariuki",
+  email: "james.kariuki@fieldwatch.go.ke",
+};
+
+const DEFAULT_SYSTEM_PREFERENCES: SystemPreferences = {
+  emailNotifications: true,
+  smsAlerts: true,
+  autoSync: true,
+  defaultDailyTarget: 6,
+};
 
 function mergeFieldTasks(
   officerId: string,
@@ -37,6 +51,8 @@ interface AppState {
   complaints: Complaint[];
   dailySummaries: DailySummary[];
   reports: GeneratedReport[];
+  supervisorProfile: SupervisorProfile;
+  systemPreferences: SystemPreferences;
   activity: ActivityEvent[];
   pendingSync: PendingSyncItem[];
   offlineMode: boolean;
@@ -105,6 +121,9 @@ interface AppState {
     filters: Record<string, unknown>;
     generatedBy: string;
   }) => Promise<void>;
+  loadSettings: () => Promise<void>;
+  updateSupervisorProfile: (profile: SupervisorProfile) => Promise<void>;
+  updateSystemPreferences: (prefs: SystemPreferences) => Promise<void>;
   flushPendingSync: () => void;
 }
 
@@ -123,6 +142,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   complaints: [],
   dailySummaries: [],
   reports: [],
+  supervisorProfile: DEFAULT_SUPERVISOR_PROFILE,
+  systemPreferences: DEFAULT_SYSTEM_PREFERENCES,
   activity: [],
   pendingSync: [],
   offlineMode: false,
@@ -454,6 +475,21 @@ export const useAppStore = create<AppState>((set, get) => ({
   logReport: async (input) => {
     const created = await api.createReport(input);
     set((state) => ({ reports: [created, ...state.reports] }));
+  },
+
+  loadSettings: async () => {
+    const { supervisorProfile, systemPreferences } = await api.getSettings();
+    set({ supervisorProfile, systemPreferences });
+  },
+
+  updateSupervisorProfile: async (profile) => {
+    const value = await api.updateSupervisorProfile(profile);
+    set({ supervisorProfile: value });
+  },
+
+  updateSystemPreferences: async (prefs) => {
+    const value = await api.updateSystemPreferences(prefs);
+    set({ systemPreferences: value });
   },
 
   flushPendingSync: () =>

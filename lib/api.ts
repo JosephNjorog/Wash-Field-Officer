@@ -8,6 +8,8 @@ import type {
   InspectionFormData,
   Officer,
   OfficerStatus,
+  SupervisorProfile,
+  SystemPreferences,
 } from "@/lib/types";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -128,4 +130,21 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }).then((r) => r.complaint),
+
+  getSettings: () =>
+    request<{ supervisorProfile: SupervisorProfile; systemPreferences: SystemPreferences }>(
+      "/api/settings"
+    ),
+
+  updateSupervisorProfile: (value: SupervisorProfile) =>
+    request<{ value: SupervisorProfile }>("/api/settings", {
+      method: "PATCH",
+      body: JSON.stringify({ key: "supervisor_profile", value }),
+    }).then((r) => r.value),
+
+  updateSystemPreferences: (value: SystemPreferences) =>
+    request<{ value: SystemPreferences }>("/api/settings", {
+      method: "PATCH",
+      body: JSON.stringify({ key: "system_preferences", value }),
+    }).then((r) => r.value),
 };

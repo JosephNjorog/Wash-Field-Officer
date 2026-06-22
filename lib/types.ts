@@ -118,6 +118,18 @@ export interface GeneratedReport {
   createdAt: string;
 }
 
+export interface SupervisorProfile {
+  name: string;
+  email: string;
+}
+
+export interface SystemPreferences {
+  emailNotifications: boolean;
+  smsAlerts: boolean;
+  autoSync: boolean;
+  defaultDailyTarget: number;
+}
+
 export interface ActivityEvent {
   id: string;
   type: "inspection" | "complaint" | "issue" | "check-in";
